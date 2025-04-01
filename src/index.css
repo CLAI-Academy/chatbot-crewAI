@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,6 +97,29 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-chat-dark text-chat-light;
+  }
+  
+  .chat-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-message-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .chat-input-container {
+    border-top: 1px solid theme('colors.chat.tag');
+    padding: 1rem;
+  }
+  
+  .tag-button {
+    @apply bg-chat-tag text-white px-3 py-1 rounded-full text-xs font-medium mr-2 hover:bg-chat-accent transition-colors;
   }
 }
