@@ -13,7 +13,7 @@ const SuggestionTags: React.FC<SuggestionTagsProps> = ({ tags, onTagClick }) => 
         <button 
           key={index}
           onClick={() => onTagClick(tag)}
-          className="bg-chat-tag/50 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-chat-accent/80 transition-colors duration-300 shadow-md hover:shadow-lg"
+          className="bg-gray-800/60 text-gray-300 px-4 py-2 rounded-full text-sm font-medium hover:bg-chat-accent/80 transition-colors duration-300 border border-gray-700/50"
         >
           {tag}
         </button>

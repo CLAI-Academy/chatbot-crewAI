@@ -26,7 +26,7 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
       
       <div className={cn(
         "rounded-lg p-3 max-w-[80%] shadow-md",
-        isAi ? "bg-chat-tag/80 text-white" : "bg-chat-accent/90 text-white"
+        isAi ? "bg-gray-800/80 text-white" : "bg-chat-accent/90 text-white"
       )}>
         <p className="whitespace-pre-wrap">{message.content}</p>
         <div className="text-xs text-gray-400 mt-1 text-right">

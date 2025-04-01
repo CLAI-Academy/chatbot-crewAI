@@ -11,7 +11,7 @@ const ChatInterface: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   
   const suggestionTags = [
-    "Futuro", "Futurista", "Tecnología", "IA", "Innovación"
+    "Future", "Futuristic", "Futures"
   ];
   
   const handleSendMessage = (content: string) => {
@@ -43,7 +43,7 @@ const ChatInterface: React.FC = () => {
   };
   
   return (
-    <div className="flex flex-col h-[80vh] bg-chat-dark/80 rounded-xl">
+    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-chat-darker shadow-2xl overflow-hidden border border-gray-700/30">
       <ChatHeader />
       
       <div className="flex-1 overflow-y-auto px-4 py-2 scroll-smooth">

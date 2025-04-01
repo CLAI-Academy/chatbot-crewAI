@@ -8,23 +8,23 @@ type WelcomeMessageProps = {
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ username = "Invitado" }) => {
   return (
-    <div className="flex flex-col items-center justify-center my-12 animate-fade-in">
+    <div className="flex flex-col items-center justify-center py-16 animate-fade-in text-center">
       <div className="mb-6">
-        <Logo size={70} />
+        <Logo size={64} />
       </div>
       
-      <h1 className="text-2xl font-bold text-white mb-2">
-        Hola, {username}
+      <h1 className="text-xl font-medium text-gray-300 mb-2">
+        Hi, {username}
       </h1>
       
-      <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-4">
-        ¿En qué puedo ayudarte hoy?
+      <h2 className="text-3xl font-bold text-white mb-4">
+        Can I help you with anything?
       </h2>
       
-      <p className="text-gray-400 text-center max-w-md mb-8">
-        Estoy listo para asistirte con lo que necesites.
-        Desde responder preguntas, generar contenido hasta proporcionar
-        recomendaciones personalizadas. ¡Comencemos!
+      <p className="text-gray-400 text-center max-w-md mb-8 text-sm">
+        Ready to assist you with anything you need?
+        From answering questions, generation to providing
+        recommendations. Let's get started!
       </p>
     </div>
   );
