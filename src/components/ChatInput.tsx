@@ -18,11 +18,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   };
 
   return (
-    <div className="chat-input-container bg-chat-darker">
-      <form onSubmit={handleSubmit} className="flex items-center">
+    <div className="p-4 bg-gradient-to-r from-chat-darker to-chat-dark/90 border-t border-chat-tag/20">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <button 
           type="button" 
-          className="p-2 mr-2 rounded-full hover:bg-chat-tag transition-colors"
+          className="p-2 rounded-full hover:bg-chat-tag/50 transition-colors duration-300"
         >
           <Paperclip size={20} className="text-gray-400" />
         </button>
@@ -33,23 +33,23 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Escribe un mensaje..."
-            className="w-full rounded-full py-3 px-4 bg-chat-tag text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-chat-accent"
+            className="w-full rounded-full py-3 px-4 bg-chat-tag/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-chat-accent/50 transition-all duration-300"
           />
         </div>
         
         <button 
           type="button" 
-          className="p-2 mx-2 rounded-full hover:bg-chat-tag transition-colors"
+          className="p-2 rounded-full hover:bg-chat-tag/50 transition-colors duration-300"
         >
           <Mic size={20} className="text-gray-400" />
         </button>
         
         <button 
           type="submit" 
-          className="p-2 rounded-full bg-chat-accent hover:bg-opacity-80 transition-colors"
+          className={`p-3 rounded-full ${message.trim() ? 'bg-chat-accent hover:bg-opacity-80' : 'bg-chat-tag/50 cursor-not-allowed'} transition-colors duration-300`}
           disabled={!message.trim()}
         >
-          <Send size={20} className="text-white" />
+          <Send size={18} className="text-white" />
         </button>
       </form>
     </div>
