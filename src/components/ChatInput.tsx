@@ -37,8 +37,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={`p-4 ${centered ? 'bg-transparent' : 'bg-chat-darker border-t border-gray-800/50'} transition-all duration-300`}>
-      <form onSubmit={handleSubmit} className={`flex items-center gap-2 ${centered ? 'rounded-full bg-gray-800/30 p-1.5 shadow-xl' : ''}`}>
+    <div className={`p-4 ${centered ? 'bg-transparent' : 'bg-chat-darker border-t border-gray-800/30'} transition-all duration-500`}>
+      <form onSubmit={handleSubmit} className={`flex items-center gap-2 ${centered ? 'rounded-full bg-gray-800/30 p-1.5 shadow-xl backdrop-blur-sm border border-gray-700/30' : ''}`}>
         <button 
           type="button" 
           className={`p-2 rounded-full hover:bg-gray-700 transition-colors duration-300 ${centered ? 'bg-gray-800/50' : ''}`}
@@ -53,14 +53,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
             value={message}
             onChange={handleChange}
             placeholder={isLoading ? "Esperando respuesta..." : "Pregunta lo que quieras"}
-            className={`w-full py-3 px-4 ${centered ? 'bg-transparent' : 'bg-gray-800/70 rounded-full'} text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-700 transition-all duration-300`}
+            className={`w-full py-3 px-4 ${centered ? 'bg-transparent' : 'bg-gray-800/50 rounded-full border border-gray-700/20'} text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-chat-accent/50 transition-all duration-300`}
             disabled={isLoading}
           />
         </div>
         
         <button 
           type="submit" 
-          className={`p-3 rounded-full ${message.trim() && !isLoading ? 'bg-chat-accent hover:bg-opacity-80' : 'bg-gray-800 cursor-not-allowed'} transition-colors duration-300`}
+          className={`p-3 rounded-full ${message.trim() && !isLoading ? 'bg-chat-accent hover:bg-chat-accent/80 shadow-md' : 'bg-gray-800 cursor-not-allowed'} transition-colors duration-300`}
           disabled={!message.trim() || isLoading}
         >
           <Send size={18} className="text-white" />

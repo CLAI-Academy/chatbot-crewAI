@@ -19,14 +19,14 @@ const ChatHeader: React.FC = () => {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-chat-darker border-b border-chat-tag/20">
+    <header className="flex justify-between items-center p-4 bg-chat-darker backdrop-blur-sm border-b border-gray-800/20 shadow-sm">
       <Logo size={32} />
       <div className="flex items-center gap-2">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={handleAuthAction}
-          className="text-white/70 hover:text-white hover:bg-gray-700/40"
+          className="text-white/70 hover:text-white hover:bg-gray-700/40 transition-all duration-300"
         >
           {user ? (
             <>
@@ -40,8 +40,8 @@ const ChatHeader: React.FC = () => {
             </>
           )}
         </Button>
-        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700/40 hover:bg-chat-tag transition-colors duration-300">
-          <Maximize2 size={16} className="text-white/70" />
+        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/50 hover:bg-chat-accent/70 transition-colors duration-300 shadow-sm">
+          <Maximize2 size={16} className="text-white/80" />
         </button>
       </div>
     </header>

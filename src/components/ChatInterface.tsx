@@ -7,6 +7,7 @@ import WelcomeMessage from './WelcomeMessage';
 import SuggestionTags from './SuggestionTags';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -167,13 +168,13 @@ const ChatInterface: React.FC = () => {
   };
   
   return (
-    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-chat-darker shadow-2xl overflow-hidden border border-gray-700/30">
+    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30">
       <ChatHeader />
       
-      <div className={`${showWelcome && inputCentered ? 'flex flex-col justify-center items-center' : 'flex-1 overflow-y-auto px-4 py-2 scroll-smooth'}`}>
+      <div className={`${showWelcome && inputCentered ? 'flex flex-col justify-center items-center' : 'flex-1 overflow-hidden'}`}>
         {showWelcome && inputCentered ? (
-          <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center">
-            <h1 className="text-3xl font-bold mb-12 text-white">¿En qué puedo ayudarte?</h1>
+          <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-6">
+            <h1 className="text-3xl font-bold mb-12 text-white bg-clip-text bg-gradient-to-r from-white to-gray-400">¿En qué puedo ayudarte?</h1>
             <div className="w-full mb-6">
               <ChatInput 
                 onSendMessage={handleSendMessage} 
@@ -184,21 +185,23 @@ const ChatInterface: React.FC = () => {
             </div>
           </div>
         ) : (
-          <>
-            {messages.map(message => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
-            <div ref={messagesEndRef} />
-            {isLoading && (
-              <div className="flex justify-start my-4">
-                <div className="flex space-x-2 p-3 bg-gray-800/80 rounded-lg">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
+          <ScrollArea className="flex-1 px-4 py-2">
+            <>
+              {messages.map(message => (
+                <ChatMessage key={message.id} message={message} />
+              ))}
+              <div ref={messagesEndRef} />
+              {isLoading && (
+                <div className="flex justify-start my-4">
+                  <div className="flex space-x-2 p-3 bg-gray-800/80 rounded-lg">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </>
+          </ScrollArea>
         )}
       </div>
       
