@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
 
 type WelcomeMessageProps = {
@@ -7,6 +7,23 @@ type WelcomeMessageProps = {
 };
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ username = "Invitado" }) => {
+  const [typedText, setTypedText] = useState('');
+  const fullText = "Bienvenido al chat de CLAI";
+  
+  useEffect(() => {
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setTypedText(fullText.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 100); // Speed of typing animation
+    
+    return () => clearInterval(typingInterval);
+  }, []);
+  
   return (
     <div className="flex flex-col items-center justify-center py-16 animate-fade-in text-center">
       <div className="mb-8 transform hover:scale-105 transition-transform duration-300">
@@ -17,8 +34,10 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ username = "Invitado" }
         Hola, {username}
       </h1>
       
-      <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-chat-accent">
-        ¿En qué puedo ayudarte?
+      <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-chat-accent min-h-[48px]">
+        <span className="inline-block border-r-2 border-chat-accent animate-cursor-blink">
+          {typedText}
+        </span>
       </h2>
       
       <p className="text-gray-400 text-center max-w-md mb-10 text-sm leading-relaxed">

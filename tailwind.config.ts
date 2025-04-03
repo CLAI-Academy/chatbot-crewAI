@@ -100,13 +100,18 @@ export default {
 				'blink': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0' }
+				},
+				'cursor-blink': {
+					'0%, 100%': { borderColor: 'transparent' },
+					'50%': { borderColor: 'currentColor' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'typing': 'typing 2s steps(20, end)',
-				'cursor-blink': 'blink 1s infinite'
+				'cursor-blink': 'blink 1s infinite',
+				'fade-in': 'fade-in 0.3s ease-out'
 			}
 		}
 	},

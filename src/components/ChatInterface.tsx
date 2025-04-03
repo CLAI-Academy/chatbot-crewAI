@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -168,23 +167,23 @@ const ChatInterface: React.FC = () => {
   };
   
   return (
-    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30">
+    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30 relative">
       <ChatHeader />
       
-      <div className={`${showWelcome && inputCentered ? 'flex flex-col justify-center items-center' : 'flex-1 overflow-hidden'}`}>
-        {showWelcome && inputCentered ? (
-          <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-6">
-            <h1 className="text-3xl font-bold mb-12 text-white bg-clip-text bg-gradient-to-r from-white to-gray-400">¿En qué puedo ayudarte?</h1>
-            <div className="w-full mb-6">
-              <ChatInput 
-                onSendMessage={handleSendMessage} 
-                isLoading={isLoading} 
-                centered={true}
-                onTypingStart={handleTypingStart}
-              />
-            </div>
+      {showWelcome && inputCentered ? (
+        <div className="absolute inset-0 flex flex-col justify-center items-center px-6">
+          <WelcomeMessage />
+          <div className="w-full max-w-lg mx-auto mb-6">
+            <ChatInput 
+              onSendMessage={handleSendMessage} 
+              isLoading={isLoading} 
+              centered={true}
+              onTypingStart={handleTypingStart}
+            />
           </div>
-        ) : (
+        </div>
+      ) : (
+        <>
           <ScrollArea className="flex-1 px-4 py-2">
             <>
               {messages.map(message => (
@@ -202,18 +201,15 @@ const ChatInterface: React.FC = () => {
               )}
             </>
           </ScrollArea>
-        )}
-      </div>
-      
-      {(!showWelcome || !inputCentered) && (
-        <div className="mt-auto">
-          <ChatInput 
-            onSendMessage={handleSendMessage} 
-            isLoading={isLoading}
-            centered={false}
-            onTypingStart={handleTypingStart}
-          />
-        </div>
+          <div className="mt-auto">
+            <ChatInput 
+              onSendMessage={handleSendMessage} 
+              isLoading={isLoading}
+              centered={false}
+              onTypingStart={handleTypingStart}
+            />
+          </div>
+        </>
       )}
     </div>
   );
