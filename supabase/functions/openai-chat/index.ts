@@ -22,6 +22,8 @@ serve(async (req) => {
       throw new Error("No message provided");
     }
 
+    console.log("Calling OpenAI with message:", message);
+    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -34,6 +36,12 @@ serve(async (req) => {
         stream: true,
       }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("OpenAI API error:", response.status, errorData);
+      throw new Error(`OpenAI API error: ${response.status} ${errorData}`);
+    }
 
     if (!response.body) {
       throw new Error("No response body received");

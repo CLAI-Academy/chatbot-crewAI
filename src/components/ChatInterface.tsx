@@ -6,6 +6,7 @@ import ChatInput from './ChatInput';
 import WelcomeMessage from './WelcomeMessage';
 import SuggestionTags from './SuggestionTags';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -29,9 +30,16 @@ const ChatInterface: React.FC = () => {
     try {
       setIsLoading(true);
       
+      console.log("Sending message to OpenAI:", userMessage);
+      
       const response = await supabase.functions.invoke('openai-chat', {
         body: { message: userMessage },
       });
+      
+      if (response.error) {
+        console.error("Supabase function error:", response.error);
+        throw new Error(`Error calling OpenAI: ${response.error.message}`);
+      }
       
       if (!response.data) {
         throw new Error('No streaming data received');
@@ -52,49 +60,61 @@ const ChatInterface: React.FC = () => {
       setMessages(prev => [...prev, tempAiMessage]);
       
       // Process the stream
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        // Decode the chunk
-        const chunk = decoder.decode(value);
-        
-        // Process each line in the chunk
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
-        
-        for (const line of lines) {
-          // Skip lines that don't start with "data: "
-          if (!line.startsWith('data: ')) continue;
+      let buffer = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
           
-          // Extract the JSON string
-          const jsonString = line.slice(6);
+          // Decode the chunk
+          const chunk = decoder.decode(value);
+          buffer += chunk;
           
-          // Check for the [DONE] message
-          if (jsonString.trim() === '[DONE]') continue;
+          // Process each line in the buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
           
-          try {
-            // Parse the JSON
-            const json = JSON.parse(jsonString);
+          for (const line of lines) {
+            // Skip empty lines
+            if (line.trim() === '') continue;
             
-            // Extract the content delta if it exists
-            const contentDelta = json.choices?.[0]?.delta?.content || '';
+            // Skip lines that don't start with "data: "
+            if (!line.startsWith('data: ')) continue;
             
-            // Update the AI message with the new content
-            setMessages(prevMessages => {
-              const updatedMessages = [...prevMessages];
-              const lastMessageIndex = updatedMessages.length - 1;
-              if (lastMessageIndex >= 0 && updatedMessages[lastMessageIndex].sender === 'ai') {
-                updatedMessages[lastMessageIndex] = {
-                  ...updatedMessages[lastMessageIndex],
-                  content: updatedMessages[lastMessageIndex].content + contentDelta
-                };
-              }
-              return updatedMessages;
-            });
-          } catch (error) {
-            console.error('Error parsing JSON from stream:', error);
+            // Extract the data
+            const data = line.slice(6);
+            
+            // Check for the [DONE] message
+            if (data.trim() === '[DONE]') continue;
+            
+            try {
+              // Parse the JSON
+              const json = JSON.parse(data);
+              
+              // Extract the content delta if it exists
+              const contentDelta = json.choices?.[0]?.delta?.content || '';
+              
+              // Update the AI message with the new content
+              setMessages(prevMessages => {
+                const updatedMessages = [...prevMessages];
+                const lastMessageIndex = updatedMessages.length - 1;
+                if (lastMessageIndex >= 0 && updatedMessages[lastMessageIndex].sender === 'ai') {
+                  updatedMessages[lastMessageIndex] = {
+                    ...updatedMessages[lastMessageIndex],
+                    content: updatedMessages[lastMessageIndex].content + contentDelta
+                  };
+                }
+                return updatedMessages;
+              });
+            } catch (error) {
+              console.error('Error parsing JSON from stream:', error, 'Raw data:', data);
+            }
           }
         }
+      } catch (error) {
+        console.error('Error processing stream:', error);
+        throw error;
       }
     } catch (error) {
       console.error('Error fetching OpenAI stream:', error);
@@ -109,6 +129,12 @@ const ChatInterface: React.FC = () => {
           timestamp: new Date()
         }
       ]);
+      
+      toast({
+        title: "Error",
+        description: "Error al conectar con OpenAI. Por favor, intenta de nuevo.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
