@@ -1,25 +1,38 @@
 
-import React, { useState } from 'react';
-import { Send, Paperclip, Plus, Globe, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Plus } from 'lucide-react';
 
 type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   centered?: boolean;
+  onTypingStart?: () => void;
 };
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading = false, 
-  centered = false 
+  centered = false,
+  onTypingStart
 }) => {
   const [message, setMessage] = useState('');
+  const [hasTyped, setHasTyped] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !isLoading) {
       onSendMessage(message);
       setMessage('');
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMessage = e.target.value;
+    setMessage(newMessage);
+    
+    if (!hasTyped && newMessage.trim() !== '') {
+      setHasTyped(true);
+      onTypingStart && onTypingStart();
     }
   };
 
@@ -34,37 +47,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Plus size={20} className="text-gray-400" />
         </button>
         
-        <div className="flex-1 relative flex items-center gap-2">
+        <div className="flex-1 relative flex items-center">
           <input
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleChange}
             placeholder={isLoading ? "Esperando respuesta..." : "Pregunta lo que quieras"}
             className={`w-full py-3 px-4 ${centered ? 'bg-transparent' : 'bg-gray-800/70 rounded-full'} text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-700 transition-all duration-300`}
             disabled={isLoading}
           />
-          
-          {centered && (
-            <>
-              <button 
-                type="button" 
-                className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700 transition-colors duration-300"
-                disabled={isLoading}
-              >
-                <Globe size={20} className="text-gray-400" />
-                <span className="sr-only">Buscar</span>
-              </button>
-              
-              <button 
-                type="button" 
-                className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700 transition-colors duration-300"
-                disabled={isLoading}
-              >
-                <Search size={20} className="text-gray-400" />
-                <span className="ml-2 text-gray-400 hidden md:inline">Investigación en profundidad</span>
-              </button>
-            </>
-          )}
         </div>
         
         <button 

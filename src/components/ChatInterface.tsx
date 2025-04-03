@@ -7,12 +7,12 @@ import WelcomeMessage from './WelcomeMessage';
 import SuggestionTags from './SuggestionTags';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Globe, Search } from 'lucide-react';
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [inputCentered, setInputCentered] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const suggestionTags = [
@@ -152,9 +152,14 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
+    setInputCentered(false);
     
     // Stream response from OpenAI
     fetchOpenAIStream(content);
+  };
+  
+  const handleTypingStart = () => {
+    setInputCentered(false);
   };
   
   const handleTagClick = (tag: string) => {
@@ -165,15 +170,16 @@ const ChatInterface: React.FC = () => {
     <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-chat-darker shadow-2xl overflow-hidden border border-gray-700/30">
       <ChatHeader />
       
-      <div className={`flex-1 overflow-y-auto px-4 py-2 scroll-smooth ${showWelcome ? 'flex flex-col justify-center items-center' : ''}`}>
-        {showWelcome ? (
+      <div className={`${showWelcome && inputCentered ? 'flex flex-col justify-center items-center' : 'flex-1 overflow-y-auto px-4 py-2 scroll-smooth'}`}>
+        {showWelcome && inputCentered ? (
           <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-12 text-white">¿En qué puedo ayudarte?</h1>
             <div className="w-full mb-6">
               <ChatInput 
                 onSendMessage={handleSendMessage} 
                 isLoading={isLoading} 
-                centered={true} 
+                centered={true}
+                onTypingStart={handleTypingStart}
               />
             </div>
           </div>
@@ -196,12 +202,15 @@ const ChatInterface: React.FC = () => {
         )}
       </div>
       
-      {!showWelcome && (
-        <ChatInput 
-          onSendMessage={handleSendMessage} 
-          isLoading={isLoading}
-          centered={false}
-        />
+      {(!showWelcome || !inputCentered) && (
+        <div className="mt-auto">
+          <ChatInput 
+            onSendMessage={handleSendMessage} 
+            isLoading={isLoading}
+            centered={false}
+            onTypingStart={handleTypingStart}
+          />
+        </div>
       )}
     </div>
   );
