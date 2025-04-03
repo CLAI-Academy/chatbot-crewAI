@@ -7,6 +7,7 @@ import WelcomeMessage from './WelcomeMessage';
 import SuggestionTags from './SuggestionTags';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Plus, Globe, Search } from 'lucide-react';
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -164,12 +165,18 @@ const ChatInterface: React.FC = () => {
     <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-chat-darker shadow-2xl overflow-hidden border border-gray-700/30">
       <ChatHeader />
       
-      <div className="flex-1 overflow-y-auto px-4 py-2 scroll-smooth">
+      <div className={`flex-1 overflow-y-auto px-4 py-2 scroll-smooth ${showWelcome ? 'flex flex-col justify-center items-center' : ''}`}>
         {showWelcome ? (
-          <>
-            <WelcomeMessage username="Tommy Radison" />
-            <SuggestionTags tags={suggestionTags} onTagClick={handleTagClick} />
-          </>
+          <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center">
+            <h1 className="text-3xl font-bold mb-12 text-white">¿En qué puedo ayudarte?</h1>
+            <div className="w-full mb-6">
+              <ChatInput 
+                onSendMessage={handleSendMessage} 
+                isLoading={isLoading} 
+                centered={true} 
+              />
+            </div>
+          </div>
         ) : (
           <>
             {messages.map(message => (
@@ -189,7 +196,13 @@ const ChatInterface: React.FC = () => {
         )}
       </div>
       
-      <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      {!showWelcome && (
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          isLoading={isLoading}
+          centered={false}
+        />
+      )}
     </div>
   );
 };
