@@ -16,7 +16,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onTypingStart
 }) => {
   const [message, setMessage] = useState('');
-  const [hasTyped, setHasTyped] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +28,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMessage = e.target.value;
     setMessage(newMessage);
-    
-    if (!hasTyped && newMessage.trim() !== '') {
-      setHasTyped(true);
-      onTypingStart && onTypingStart();
-    }
   };
 
   return (

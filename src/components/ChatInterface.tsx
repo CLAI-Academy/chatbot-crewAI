@@ -152,18 +152,10 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false);
+    setInputCentered(false); // Move this here to transition only when a message is sent
     
     // Stream response from OpenAI
     fetchOpenAIStream(content);
-  };
-  
-  const handleTypingStart = () => {
-    setInputCentered(false);
-  };
-  
-  const handleTagClick = (tag: string) => {
-    handleSendMessage(`Cuéntame sobre ${tag}`);
   };
   
   return (
@@ -178,7 +170,6 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading} 
               centered={true}
-              onTypingStart={handleTypingStart}
             />
           </div>
         </div>
@@ -206,7 +197,6 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading}
               centered={false}
-              onTypingStart={handleTypingStart}
             />
           </div>
         </>
