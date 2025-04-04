@@ -25,10 +25,10 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
       )}
       
       <div className={cn(
-        "rounded-xl p-4 max-w-[80%] shadow-md backdrop-blur-sm",
+        "rounded-xl p-4 max-w-[80%]",
         isAi 
-          ? "bg-gray-800/70 text-white border border-gray-700/30" 
-          : "bg-chat-accent/90 text-white border border-chat-accent/50"
+          ? "text-white" // Sin fondo para mensajes del bot
+          : "bg-chat-accent/90 text-white border border-chat-accent/50 shadow-md backdrop-blur-sm"
       )}>
         <p className="whitespace-pre-wrap text-sm md:text-base">{message.content}</p>
         <div className="text-xs text-gray-400 mt-2 text-right">
