@@ -1,19 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Send, Plus } from 'lucide-react';
 
 type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   centered?: boolean;
-  onTypingStart?: () => void;
 };
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading = false, 
-  centered = false,
-  onTypingStart
+  centered = false
 }) => {
   const [message, setMessage] = useState('');
 
