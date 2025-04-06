@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -107,12 +108,10 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false); // Move this here to transition only when a message is sent
+    setInputCentered(false);
     
     // Usar la API de localhost en lugar de OpenAI
     fetchResponse(content);
-    // Si quieres usar OpenAI en su lugar, comenta la línea anterior y descomenta la siguiente:
-    // fetchOpenAIStream(content);
   };
   
   const handleTypingStart = () => {
@@ -141,8 +140,8 @@ const ChatInterface: React.FC = () => {
         </div>
       ) : (
         <>
-          <ScrollArea className="flex-1 px-4 py-2">
-            <>
+          <ScrollArea className="flex-1 px-4 py-2 overflow-auto">
+            <div className="max-w-full">
               {messages.map(message => (
                 <ChatMessage key={message.id} message={message} />
               ))}
@@ -156,7 +155,7 @@ const ChatInterface: React.FC = () => {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           </ScrollArea>
           <div className="mt-auto">
             <ChatInput 
