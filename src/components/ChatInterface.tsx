@@ -108,15 +108,13 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false);
+    setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
     
     // Usar la API de localhost en lugar de OpenAI
     fetchResponse(content);
   };
   
-  const handleTypingStart = () => {
-    setInputCentered(false);
-  };
+  // Eliminamos la funcionalidad de handleTypingStart que cambiaba la posición del input
   
   const handleTagClick = (tag: string) => {
     handleSendMessage(`Cuéntame sobre ${tag}`);
@@ -134,7 +132,7 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading} 
               centered={true}
-              onTypingStart={handleTypingStart}
+              // Ya no pasamos la función onTypingStart aquí
             />
           </div>
         </div>
@@ -162,7 +160,7 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading}
               centered={false}
-              onTypingStart={handleTypingStart}
+              // Ya no pasamos la función onTypingStart aquí
             />
           </div>
         </>

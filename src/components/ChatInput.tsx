@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send, Plus } from 'lucide-react';
 
@@ -5,14 +6,14 @@ type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   centered?: boolean;
-  onTypingStart?: () => void;
+  // Eliminamos onTypingStart de las props
 };
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading = false, 
-  centered = false,
-  onTypingStart
+  centered = false
+  // Eliminamos onTypingStart de los parámetros
 }) => {
   const [message, setMessage] = useState('');
 
@@ -28,9 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     const newMessage = e.target.value;
     setMessage(newMessage);
     
-    if (newMessage.trim() !== '' && onTypingStart) {
-      onTypingStart();
-    }
+    // Eliminamos la llamada a onTypingStart
   };
 
   return (
