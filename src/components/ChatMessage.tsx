@@ -65,12 +65,18 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
               blockquote: ({ node, ...props }) => (
                 <blockquote className="border-l-4 border-gray-700 pl-4 italic text-gray-300 my-4 break-words" {...props} />
               ),
-              code: ({ node, inline, ...props }) => 
-                inline ? (
-                  <code className="bg-gray-800 px-1 py-0.5 rounded text-sm font-mono break-words" {...props} />
+              code: ({ node, className, children, ...props }) => {
+                const match = /language-(\w+)/.exec(className || '');
+                return !className ? (
+                  <code className="bg-gray-800 px-1 py-0.5 rounded text-sm font-mono break-words" {...props}>
+                    {children}
+                  </code>
                 ) : (
-                  <code className="block bg-gray-800/70 p-3 rounded-md overflow-x-auto text-sm font-mono my-4 break-words" {...props} />
-                ),
+                  <code className="block bg-gray-800/70 p-3 rounded-md overflow-x-auto text-sm font-mono my-4 break-words" {...props}>
+                    {children}
+                  </code>
+                );
+              },
               pre: ({ node, ...props }) => (
                 <pre className="bg-gray-800/70 p-0 rounded-md overflow-x-auto my-4 break-words" {...props} />
               ),
