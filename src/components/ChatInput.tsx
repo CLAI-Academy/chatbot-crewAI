@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Plus } from 'lucide-react';
 
@@ -6,12 +5,14 @@ type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   centered?: boolean;
+  onTypingStart?: () => void;
 };
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading = false, 
-  centered = false
+  centered = false,
+  onTypingStart
 }) => {
   const [message, setMessage] = useState('');
 
@@ -26,6 +27,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMessage = e.target.value;
     setMessage(newMessage);
+    
+    if (newMessage.trim() !== '' && onTypingStart) {
+      onTypingStart();
+    }
   };
 
   return (

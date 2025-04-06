@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -28,100 +27,54 @@ const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const fetchOpenAIStream = async (userMessage: string) => {
+  // Nueva función para llamar a la API de localhost
+  const fetchResponse = async (userMessage: string) => {
     try {
       setIsLoading(true);
       
-      console.log("Sending message to OpenAI:", userMessage);
+      console.log("Enviando mensaje a la API local:", userMessage);
       
-      const response = await supabase.functions.invoke('openai-chat', {
-        body: { message: userMessage },
+      const response = await fetch('http://localhost:8000/conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage
+        })
       });
       
-      if (response.error) {
-        console.error("Supabase function error:", response.error);
-        throw new Error(`Error calling OpenAI: ${response.error.message}`);
+      if (!response.ok) {
+        console.error('Error de respuesta:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Detalles del error:', errorText);
+        throw new Error(`Error en la API: ${response.status}`);
       }
       
-      if (!response.data) {
-        throw new Error('No streaming data received');
+      const data = await response.json();
+      console.log("Respuesta recibida:", data);
+      
+      // Verificar que la respuesta tenga el formato correcto
+      if (!data || typeof data.response !== 'string') {
+        console.error('Formato de respuesta inválido:', data);
+        throw new Error('Formato de respuesta inválido');
       }
       
-      const reader = response.data.getReader();
-      const decoder = new TextDecoder("utf-8");
-      
-      // Create an AI message that will be updated as chunks come in
-      const tempAiMessage: MessageType = {
-        id: (Date.now() + 1).toString(),
-        content: '',
+      // Crear el mensaje de respuesta
+      const aiMessage: MessageType = {
+        id: Date.now().toString(),
+        content: data.response,
         sender: 'ai',
         timestamp: new Date()
       };
       
-      // Add the empty AI message
-      setMessages(prev => [...prev, tempAiMessage]);
+      // Añadir el mensaje a la conversación de forma segura
+      setMessages(prev => [...prev, aiMessage]);
       
-      // Process the stream
-      let buffer = '';
-      
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          // Decode the chunk
-          const chunk = decoder.decode(value);
-          buffer += chunk;
-          
-          // Process each line in the buffer
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
-          
-          for (const line of lines) {
-            // Skip empty lines
-            if (line.trim() === '') continue;
-            
-            // Skip lines that don't start with "data: "
-            if (!line.startsWith('data: ')) continue;
-            
-            // Extract the data
-            const data = line.slice(6);
-            
-            // Check for the [DONE] message
-            if (data.trim() === '[DONE]') continue;
-            
-            try {
-              // Parse the JSON
-              const json = JSON.parse(data);
-              
-              // Extract the content delta if it exists
-              const contentDelta = json.choices?.[0]?.delta?.content || '';
-              
-              // Update the AI message with the new content
-              setMessages(prevMessages => {
-                const updatedMessages = [...prevMessages];
-                const lastMessageIndex = updatedMessages.length - 1;
-                if (lastMessageIndex >= 0 && updatedMessages[lastMessageIndex].sender === 'ai') {
-                  updatedMessages[lastMessageIndex] = {
-                    ...updatedMessages[lastMessageIndex],
-                    content: updatedMessages[lastMessageIndex].content + contentDelta
-                  };
-                }
-                return updatedMessages;
-              });
-            } catch (error) {
-              console.error('Error parsing JSON from stream:', error, 'Raw data:', data);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error processing stream:', error);
-        throw error;
-      }
     } catch (error) {
-      console.error('Error fetching OpenAI stream:', error);
+      console.error('Error al obtener respuesta:', error);
       
-      // Add error message
+      // Añadir mensaje de error
       setMessages(prev => [
         ...prev, 
         {
@@ -134,7 +87,7 @@ const ChatInterface: React.FC = () => {
       
       toast({
         title: "Error",
-        description: "Error al conectar con OpenAI. Por favor, intenta de nuevo.",
+        description: "Error al conectar con la API. Por favor, intenta de nuevo.",
         variant: "destructive"
       });
     } finally {
@@ -142,6 +95,7 @@ const ChatInterface: React.FC = () => {
     }
   };
   
+
   const handleSendMessage = (content: string) => {
     // Add user message
     const userMessage: MessageType = {
@@ -155,8 +109,18 @@ const ChatInterface: React.FC = () => {
     setShowWelcome(false);
     setInputCentered(false); // Move this here to transition only when a message is sent
     
-    // Stream response from OpenAI
-    fetchOpenAIStream(content);
+    // Usar la API de localhost en lugar de OpenAI
+    fetchResponse(content);
+    // Si quieres usar OpenAI en su lugar, comenta la línea anterior y descomenta la siguiente:
+    // fetchOpenAIStream(content);
+  };
+  
+  const handleTypingStart = () => {
+    setInputCentered(false);
+  };
+  
+  const handleTagClick = (tag: string) => {
+    handleSendMessage(`Cuéntame sobre ${tag}`);
   };
   
   return (
@@ -171,6 +135,7 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading} 
               centered={true}
+              onTypingStart={handleTypingStart}
             />
           </div>
         </div>
@@ -198,6 +163,7 @@ const ChatInterface: React.FC = () => {
               onSendMessage={handleSendMessage} 
               isLoading={isLoading}
               centered={false}
+              onTypingStart={handleTypingStart}
             />
           </div>
         </>
