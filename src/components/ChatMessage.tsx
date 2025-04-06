@@ -34,10 +34,10 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
         {isAi ? (
           <div className="prose prose-invert prose-sm md:prose-base max-w-none overflow-x-auto">
             <ReactMarkdown components={{
-              // Custom rendering for tables to ensure they display properly
+              // Custom rendering para tablas con mejor soporte para tablas extensas
               table: ({ node, ...props }) => (
                 <div className="overflow-x-auto my-4 w-full border border-gray-700/30 rounded-md">
-                  <table className="min-w-full border-collapse w-full table-auto text-sm" {...props} />
+                  <table className="min-w-full w-max border-collapse text-sm" {...props} />
                 </div>
               ),
               thead: ({ node, ...props }) => (
@@ -50,21 +50,12 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
                 <tr className="border-b border-gray-700/30" {...props} />
               ),
               th: ({ node, ...props }) => (
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider break-words" {...props} />
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider break-words whitespace-nowrap" {...props} />
               ),
               td: ({ node, ...props }) => (
-                <td className="px-3 py-2 whitespace-normal break-words" {...props} />
+                <td className="px-3 py-2 break-words whitespace-nowrap" {...props} />
               ),
-              // Improve other elements for better Markdown rendering
-              p: ({ node, ...props }) => (
-                <p className="mb-4 break-words" {...props} />
-              ),
-              a: ({ node, ...props }) => (
-                <a className="text-blue-400 hover:underline break-words" {...props} />
-              ),
-              blockquote: ({ node, ...props }) => (
-                <blockquote className="border-l-4 border-gray-700 pl-4 italic text-gray-300 my-4 break-words" {...props} />
-              ),
+              // Mejora para elementos code
               code: ({ node, className, children, ...props }) => {
                 const match = /language-(\w+)/.exec(className || '');
                 return !className ? (
@@ -77,6 +68,16 @@ const ChatMessage: React.FC<{ message: MessageType }> = ({ message }) => {
                   </code>
                 );
               },
+              // Mantenemos las mejoras para otros elementos
+              p: ({ node, ...props }) => (
+                <p className="mb-4 break-words" {...props} />
+              ),
+              a: ({ node, ...props }) => (
+                <a className="text-blue-400 hover:underline break-words" {...props} />
+              ),
+              blockquote: ({ node, ...props }) => (
+                <blockquote className="border-l-4 border-gray-700 pl-4 italic text-gray-300 my-4 break-words" {...props} />
+              ),
               pre: ({ node, ...props }) => (
                 <pre className="bg-gray-800/70 p-0 rounded-md overflow-x-auto my-4 break-words" {...props} />
               ),
