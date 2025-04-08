@@ -14,6 +14,7 @@ const ChatInterface: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [inputCentered, setInputCentered] = useState(true);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const suggestionTags = [
@@ -41,7 +42,9 @@ const ChatInterface: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: userMessage
+          message: userMessage,
+          // Include image data if available
+          image: uploadedImage
         })
       });
       
@@ -60,6 +63,9 @@ const ChatInterface: React.FC = () => {
         console.error('Formato de respuesta inválido:', data);
         throw new Error('Formato de respuesta inválido');
       }
+      
+      // Clear the uploaded image after processing
+      setUploadedImage(null);
       
       // Crear el mensaje de respuesta
       const aiMessage: MessageType = {
@@ -114,7 +120,32 @@ const ChatInterface: React.FC = () => {
     fetchResponse(content);
   };
   
-  // Eliminamos la funcionalidad de handleTypingStart que cambiaba la posición del input
+  const handleImageUpload = (file: File) => {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Store the image data as base64
+      const base64Image = reader.result as string;
+      setUploadedImage(base64Image);
+      
+      toast({
+        title: "Imagen cargada",
+        description: "La imagen se ha cargado y estará disponible para el próximo mensaje.",
+        variant: "default"
+      });
+    };
+    
+    reader.onerror = () => {
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la imagen. Intente de nuevo.",
+        variant: "destructive"
+      });
+    };
+    
+    reader.readAsDataURL(file);
+  };
   
   const handleTagClick = (tag: string) => {
     handleSendMessage(`Cuéntame sobre ${tag}`);
@@ -129,10 +160,10 @@ const ChatInterface: React.FC = () => {
           <WelcomeMessage />
           <div className="w-full max-w-lg mx-auto mb-6">
             <ChatInput 
-              onSendMessage={handleSendMessage} 
+              onSendMessage={handleSendMessage}
+              onImageUpload={handleImageUpload}
               isLoading={isLoading} 
               centered={true}
-              // Ya no pasamos la función onTypingStart aquí
             />
           </div>
         </div>
@@ -155,12 +186,32 @@ const ChatInterface: React.FC = () => {
               )}
             </div>
           </ScrollArea>
+          {uploadedImage && (
+            <div className="px-4 pb-2">
+              <div className="relative bg-gray-800/50 rounded-lg p-2 inline-block max-w-[200px]">
+                <img 
+                  src={uploadedImage} 
+                  alt="Uploaded" 
+                  className="h-auto max-h-[150px] rounded object-cover"
+                />
+                <button 
+                  className="absolute top-1 right-1 bg-gray-900/70 rounded-full p-1 text-gray-300 hover:text-white"
+                  onClick={() => setUploadedImage(null)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
           <div className="mt-auto">
             <ChatInput 
-              onSendMessage={handleSendMessage} 
+              onSendMessage={handleSendMessage}
+              onImageUpload={handleImageUpload}
               isLoading={isLoading}
               centered={false}
-              // Ya no pasamos la función onTypingStart aquí
             />
           </div>
         </>

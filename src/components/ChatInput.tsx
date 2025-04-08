@@ -1,21 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Send, Plus } from 'lucide-react';
 
 type ChatInputProps = {
   onSendMessage: (message: string) => void;
+  onImageUpload?: (image: File) => void;
   isLoading?: boolean;
   centered?: boolean;
-  // Eliminamos onTypingStart de las props
 };
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
+  onImageUpload,
   isLoading = false, 
   centered = false
-  // Eliminamos onTypingStart de los parámetros
 }) => {
   const [message, setMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,17 +29,38 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMessage = e.target.value;
     setMessage(newMessage);
-    
-    // Eliminamos la llamada a onTypingStart
+  };
+
+  const handlePlusClick = () => {
+    // Trigger file input click when plus button is clicked
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0 && onImageUpload) {
+      onImageUpload(files[0]);
+      // Reset file input
+      e.target.value = '';
+    }
   };
 
   return (
     <div className={`p-4 ${centered ? 'bg-transparent' : 'bg-chat-darker border-t border-gray-800/30'} transition-all duration-500`}>
       <form onSubmit={handleSubmit} className={`flex items-center gap-2 ${centered ? 'rounded-full bg-gray-800/30 p-1.5 shadow-xl backdrop-blur-sm border border-gray-700/30' : ''}`}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+          disabled={isLoading}
+        />
         <button 
           type="button" 
           className={`p-2 rounded-full hover:bg-gray-700 transition-colors duration-300 ${centered ? 'bg-gray-800/50' : ''}`}
           disabled={isLoading}
+          onClick={handlePlusClick}
         >
           <Plus size={20} className="text-gray-400" />
         </button>
