@@ -13,6 +13,7 @@ const ChatInterface: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [inputCentered, setInputCentered] = useState(true);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestionTags = ["Future", "Futuristic", "Futures"];
@@ -25,109 +26,62 @@ const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchOpenAIStream = async (userMessage: string) => {
+  // Nueva función para llamar a la API de localhost
+  const fetchResponse = async (userMessage: string) => {
     try {
       setIsLoading(true);
 
-      console.log("Sending message to OpenAI:", userMessage);
+      console.log("Enviando mensaje a la API local:", userMessage);
 
-      const response = await supabase.functions.invoke("openai-chat", {
-        body: { message: userMessage },
+      const response = await fetch("http://localhost:8000/conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          // Include image data if available
+          image: uploadedImage,
+        }),
       });
 
-      if (response.error) {
-        console.error("Supabase function error:", response.error);
-        throw new Error(`Error calling OpenAI: ${response.error.message}`);
+      if (!response.ok) {
+        console.error(
+          "Error de respuesta:",
+          response.status,
+          response.statusText
+        );
+        const errorText = await response.text();
+        console.error("Detalles del error:", errorText);
+        throw new Error(`Error en la API: ${response.status}`);
       }
 
-      if (!response.data) {
-        throw new Error("No streaming data received");
+      const data = await response.json();
+      console.log("Respuesta recibida:", data);
+
+      // Verificar que la respuesta tenga el formato correcto
+      if (!data || typeof data.response !== "string") {
+        console.error("Formato de respuesta inválido:", data);
+        throw new Error("Formato de respuesta inválido");
       }
 
-      const reader = response.data.getReader();
-      const decoder = new TextDecoder("utf-8");
+      // Clear the uploaded image after processing
+      setUploadedImage(null);
 
-      // Create an AI message that will be updated as chunks come in
-      const tempAiMessage: MessageType = {
-        id: (Date.now() + 1).toString(),
-        content: "",
+      // Crear el mensaje de respuesta
+      const aiMessage: MessageType = {
+        id: Date.now().toString(),
+        content: data.response,
         sender: "ai",
         timestamp: new Date(),
       };
 
-      // Add the empty AI message
-      setMessages((prev) => [...prev, tempAiMessage]);
-
-      // Process the stream
-      let buffer = "";
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          // Decode the chunk
-          const chunk = decoder.decode(value);
-          buffer += chunk;
-
-          // Process each line in the buffer
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep the last incomplete line in the buffer
-
-          for (const line of lines) {
-            // Skip empty lines
-            if (line.trim() === "") continue;
-
-            // Skip lines that don't start with "data: "
-            if (!line.startsWith("data: ")) continue;
-
-            // Extract the data
-            const data = line.slice(6);
-
-            // Check for the [DONE] message
-            if (data.trim() === "[DONE]") continue;
-
-            try {
-              // Parse the JSON
-              const json = JSON.parse(data);
-
-              // Extract the content delta if it exists
-              const contentDelta = json.choices?.[0]?.delta?.content || "";
-
-              // Update the AI message with the new content
-              setMessages((prevMessages) => {
-                const updatedMessages = [...prevMessages];
-                const lastMessageIndex = updatedMessages.length - 1;
-                if (
-                  lastMessageIndex >= 0 &&
-                  updatedMessages[lastMessageIndex].sender === "ai"
-                ) {
-                  updatedMessages[lastMessageIndex] = {
-                    ...updatedMessages[lastMessageIndex],
-                    content:
-                      updatedMessages[lastMessageIndex].content + contentDelta,
-                  };
-                }
-                return updatedMessages;
-              });
-            } catch (error) {
-              console.error(
-                "Error parsing JSON from stream:",
-                error,
-                "Raw data:",
-                data
-              );
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error processing stream:", error);
-        throw error;
-      }
+      // Añadir el mensaje a la conversación de forma segura
+      setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error("Error fetching OpenAI stream:", error);
+      console.error("Error al obtener respuesta:", error);
 
-      // Add error message
+      // Añadir mensaje de error
       setMessages((prev) => [
         ...prev,
         {
@@ -142,7 +96,7 @@ const ChatInterface: React.FC = () => {
       toast({
         title: "Error",
         description:
-          "Error al conectar con OpenAI. Por favor, intenta de nuevo.",
+          "Error al conectar con la API. Por favor, intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -161,10 +115,42 @@ const ChatInterface: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false); // Move this here to transition only when a message is sent
+    setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
 
-    // Stream response from OpenAI
-    fetchOpenAIStream(content);
+    // Usar la API de localhost en lugar de OpenAI
+    fetchResponse(content);
+  };
+
+  const handleImageUpload = (file: File) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Store the image data as base64
+      const base64Image = reader.result as string;
+      setUploadedImage(base64Image);
+
+      toast({
+        title: "Imagen cargada",
+        description:
+          "La imagen se ha cargado y estará disponible para el próximo mensaje.",
+        variant: "default",
+      });
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la imagen. Intente de nuevo.",
+        variant: "destructive",
+      });
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleTagClick = (tag: string) => {
+    handleSendMessage(`Cuéntame sobre ${tag}`);
   };
 
   return (
@@ -177,6 +163,7 @@ const ChatInterface: React.FC = () => {
           <div className="w-full max-w-lg mx-auto mb-6">
             <ChatInput
               onSendMessage={handleSendMessage}
+              onImageUpload={handleImageUpload}
               isLoading={isLoading}
               centered={true}
             />
@@ -184,8 +171,8 @@ const ChatInterface: React.FC = () => {
         </div>
       ) : (
         <>
-          <ScrollArea className="flex-1 px-4 py-2">
-            <>
+          <ScrollArea className="flex-1 px-4 py-2 overflow-auto">
+            <div className="max-w-full">
               {messages.map((message) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
@@ -208,11 +195,42 @@ const ChatInterface: React.FC = () => {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           </ScrollArea>
+          {uploadedImage && (
+            <div className="px-4 pb-2">
+              <div className="relative bg-gray-800/50 rounded-lg p-2 inline-block max-w-[200px]">
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded"
+                  className="h-auto max-h-[150px] rounded object-cover"
+                />
+                <button
+                  className="absolute top-1 right-1 bg-gray-900/70 rounded-full p-1 text-gray-300 hover:text-white"
+                  onClick={() => setUploadedImage(null)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
           <div className="mt-auto">
             <ChatInput
               onSendMessage={handleSendMessage}
+              onImageUpload={handleImageUpload}
               isLoading={isLoading}
               centered={false}
             />
