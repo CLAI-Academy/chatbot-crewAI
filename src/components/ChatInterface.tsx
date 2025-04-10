@@ -26,7 +26,7 @@ const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Nueva función para llamar a la API de localhost
+  // API call function
   const fetchResponse = async (userMessage: string) => {
     try {
       setIsLoading(true);
@@ -59,16 +59,14 @@ const ChatInterface: React.FC = () => {
       const data = await response.json();
       console.log("Respuesta recibida:", data);
 
-      // Verificar que la respuesta tenga el formato correcto
       if (!data || typeof data.response !== "string") {
-        console.error("Formato de respuesta inválido:", data);
         throw new Error("Formato de respuesta inválido");
       }
 
       // Clear the uploaded image after processing
       setUploadedImage(null);
 
-      // Crear el mensaje de respuesta
+      // build the AI message
       const aiMessage: MessageType = {
         id: Date.now().toString(),
         content: data.response,
@@ -76,12 +74,12 @@ const ChatInterface: React.FC = () => {
         timestamp: new Date(),
       };
 
-      // Añadir el mensaje a la conversación de forma segura
+      // Add message to the conversation
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error al obtener respuesta:", error);
 
-      // Añadir mensaje de error
+      // Add error message to the conversation
       setMessages((prev) => [
         ...prev,
         {
@@ -115,9 +113,9 @@ const ChatInterface: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
+    setInputCentered(false); // Move the input to the bottom only when a message is sent
 
-    // Usar la API de localhost en lugar de OpenAI
+    // Use the localhost API instead of OpenAI
     fetchResponse(content);
   };
 
