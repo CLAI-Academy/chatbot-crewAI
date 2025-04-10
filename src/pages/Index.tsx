@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/ChatInterface";
+// import ChatApp from "@/components/ChatApp";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index: React.FC = () => {
@@ -25,6 +26,7 @@ const Index: React.FC = () => {
   // Only render the chat interface if the user is authenticated
   return (
     <div className="flex items-center justify-center min-h-screen bg-chat-darker">
+      {/* <div className="w-full max-w-4xl">{user && <ChatApp />}</div> */}
       <div className="w-full max-w-4xl">{user && <ChatInterface />}</div>
     </div>
   );
