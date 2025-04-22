@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -15,6 +14,7 @@ const ChatInterface: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputCentered, setInputCentered] = useState(true);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const suggestionTags = [
@@ -25,11 +25,18 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      if (tempImageUrl) {
+        URL.revokeObjectURL(tempImageUrl);
+      }
+    };
+  }, [tempImageUrl]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  // Nueva función para llamar a la API de localhost
   const fetchResponse = async (userMessage: string) => {
     try {
       setIsLoading(true);
@@ -43,8 +50,7 @@ const ChatInterface: React.FC = () => {
         },
         body: JSON.stringify({
           message: userMessage,
-          // Include image data if available
-          image: uploadedImage
+          image: tempImageUrl
         })
       });
       
@@ -58,16 +64,13 @@ const ChatInterface: React.FC = () => {
       const data = await response.json();
       console.log("Respuesta recibida:", data);
       
-      // Verificar que la respuesta tenga el formato correcto
       if (!data || typeof data.response !== 'string') {
         console.error('Formato de respuesta inválido:', data);
         throw new Error('Formato de respuesta inválido');
       }
       
-      // Clear the uploaded image after processing
       setUploadedImage(null);
       
-      // Crear el mensaje de respuesta
       const aiMessage: MessageType = {
         id: Date.now().toString(),
         content: data.response,
@@ -75,13 +78,11 @@ const ChatInterface: React.FC = () => {
         timestamp: new Date()
       };
       
-      // Añadir el mensaje a la conversación de forma segura
       setMessages(prev => [...prev, aiMessage]);
       
     } catch (error) {
       console.error('Error al obtener respuesta:', error);
       
-      // Añadir mensaje de error
       setMessages(prev => [
         ...prev, 
         {
@@ -102,9 +103,7 @@ const ChatInterface: React.FC = () => {
     }
   };
   
-
   const handleSendMessage = (content: string) => {
-    // Add user message
     const userMessage: MessageType = {
       id: Date.now().toString(),
       content,
@@ -114,37 +113,27 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
+    setInputCentered(false);
     
-    // Usar la API de localhost en lugar de OpenAI
     fetchResponse(content);
   };
   
   const handleImageUpload = (file: File) => {
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // Store the image data as base64
-      const base64Image = reader.result as string;
-      setUploadedImage(base64Image);
-      
-      toast({
-        title: "Imagen cargada",
-        description: "La imagen se ha cargado y estará disponible para el próximo mensaje.",
-        variant: "default"
-      });
-    };
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+    }
     
-    reader.onerror = () => {
-      toast({
-        title: "Error",
-        description: "No se pudo cargar la imagen. Intente de nuevo.",
-        variant: "destructive"
-      });
-    };
+    const imageUrl = URL.createObjectURL(file);
+    setTempImageUrl(imageUrl);
+    setUploadedImage(imageUrl);
     
-    reader.readAsDataURL(file);
+    toast({
+      title: "Imagen cargada",
+      description: "La imagen se ha cargado y estará disponible para el próximo mensaje.",
+      variant: "default"
+    });
   };
   
   const handleTagClick = (tag: string) => {
