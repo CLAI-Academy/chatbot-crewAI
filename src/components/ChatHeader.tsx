@@ -1,10 +1,9 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Logo from './Logo';
-import { Maximize2, LogOut, LogIn } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Logo from "./Logo";
+import { Maximize2, LogOut, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const ChatHeader: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -14,17 +13,25 @@ const ChatHeader: React.FC = () => {
     if (user) {
       await signOut();
     } else {
-      navigate('/auth');
+      navigate("/auth");
     }
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-chat-darker backdrop-blur-sm border-b border-gray-800/20 shadow-sm">
-      <Logo size={32} />
+    <header className="flex justify-between items-baseline p-4 bg-chat-darker backdrop-blur-sm border-b border-gray-800/20 shadow-sm">
+      <div className="flex items-center">
+        <Logo size={40} />
+        <span className="flex items-start flex-col ml-2 font-bold text-white text-lg tracking-wider">
+          CLAI
+          <span className="text-xs text-gray-400  text-right">
+            Finanzas | Peluquería
+          </span>
+        </span>
+      </div>
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleAuthAction}
           className="text-white/70 hover:text-white hover:bg-gray-700/40 transition-all duration-300"
         >

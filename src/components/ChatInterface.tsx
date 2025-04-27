@@ -16,7 +16,7 @@ const ChatInterface: React.FC = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const suggestionTags = ["Future", "Futuristic", "Futures"];
+  const suggestionTags = ["Finanzas", "Diagnóstico capilar"];
 
   useEffect(() => {
     scrollToBottom();
@@ -148,13 +148,16 @@ const ChatInterface: React.FC = () => {
   };
 
   const handleTagClick = (tag: string) => {
-    handleSendMessage(`Cuéntame sobre ${tag}`);
+    if (tag === "Diagnóstico capilar") {
+      handleSendMessage(`Cuéntame que necesito para realizar un ${tag}`);
+    } else {
+      handleSendMessage(`Cuéntame sobre ${tag}`);
+    }
   };
 
   return (
     <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30 relative">
       <ChatHeader />
-
       {showWelcome && inputCentered ? (
         <div className="absolute inset-0 flex flex-col justify-center items-center px-6">
           <WelcomeMessage />
@@ -170,7 +173,7 @@ const ChatInterface: React.FC = () => {
       ) : (
         <>
           <ScrollArea className="flex-1 px-4 py-2 overflow-auto">
-            <div className="max-w-full">
+            <div className="max-w-full flex flex-col">
               {messages.map((message) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
@@ -181,16 +184,37 @@ const ChatInterface: React.FC = () => {
                     <div
                       className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
                       style={{ animationDelay: "0ms" }}
-                    ></div>
+                    />
                     <div
                       className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
                       style={{ animationDelay: "200ms" }}
-                    ></div>
+                    />
                     <div
                       className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
                       style={{ animationDelay: "400ms" }}
-                    ></div>
+                    />
                   </div>
+                </div>
+              )}
+              {!showWelcome && !isLoading && (
+                <div className="flex flex-col items-center space-y-4 mt-4">
+                  <SuggestionTags
+                    tags={suggestionTags}
+                    onTagClick={handleTagClick}
+                  />
+                  <p className="text-gray-400 text-sm">
+                    ¿Quieres empezar de nuevo?{" "}
+                    <button
+                      className="text-chat-accent hover:underline"
+                      onClick={() => {
+                        setMessages([]);
+                        setShowWelcome(true);
+                        setInputCentered(true);
+                      }}
+                    >
+                      Reiniciar
+                    </button>
+                  </p>
                 </div>
               )}
             </div>

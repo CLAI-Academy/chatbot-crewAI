@@ -2,7 +2,7 @@ import React from "react";
 import RenderTree from "./RenderTree";
 import { components, structure } from "./componentsList";
 
-const ChatApp: React.FC = () => {
+const DynamicBuilder: React.FC = () => {
   return (
     <div className="app-container w-full h-full">
       <RenderTree components={components} structure={structure} />
@@ -10,4 +10,4 @@ const ChatApp: React.FC = () => {
   );
 };
 
-export default ChatApp;
+export default DynamicBuilder;

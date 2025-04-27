@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/ChatInterface";
-// import ChatApp from "@/components/ChatApp";
+import ChatApp from "@/components/DynamicBuilder";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index: React.FC = () => {
