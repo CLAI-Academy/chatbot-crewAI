@@ -141,7 +141,7 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ content }) => {
     const riskAnalysisMatch = cleanedContent.match(
       /## Análisis de Retornos Ajustados al Riesgo\s*([\s\S]*?)(?=---)/
     );
-    const riskAnalysis = riskAnalysisMatch ? riskAnalysis[1].trim() : "";
+    const riskAnalysis = riskAnalysisMatch ? riskAnalysisMatch[1].trim() : "";
 
     // Parse recommendations section
     const recommendationsMatch = cleanedContent.match(
