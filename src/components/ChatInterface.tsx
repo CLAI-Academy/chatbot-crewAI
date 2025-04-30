@@ -8,6 +8,8 @@ import SuggestionTags from './SuggestionTags';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '@/hooks/useAuth';
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -15,7 +17,9 @@ const ChatInterface: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputCentered, setInputCentered] = useState(true);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imageFilePath, setImageFilePath] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
   const suggestionTags = [
     "Future", "Futuristic", "Futures"
@@ -25,11 +29,80 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Limpiar la imagen cargada al desmontar el componente
+    return () => {
+      if (imageFilePath) {
+        deleteUploadedImage(imageFilePath);
+      }
+    };
+  }, [imageFilePath]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  // Nueva función para llamar a la API de localhost
+  const uploadImageToSupabase = async (file: File): Promise<string | null> => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para subir imágenes",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    try {
+      const fileName = `${uuidv4()}-${file.name}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('temp_chat_images')
+        .upload(filePath, file);
+        
+      if (error) {
+        console.error('Error al subir imagen:', error);
+        throw error;
+      }
+      
+      // Obtener URL pública de la imagen
+      const { data: urlData } = supabase.storage
+        .from('temp_chat_images')
+        .getPublicUrl(filePath);
+        
+      setImageFilePath(filePath);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error al procesar la subida:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo subir la imagen. Intenta de nuevo.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const deleteUploadedImage = async (filePath: string) => {
+    if (!filePath) return;
+    
+    try {
+      const { error } = await supabase.storage
+        .from('temp_chat_images')
+        .remove([filePath]);
+        
+      if (error) {
+        console.error('Error al eliminar imagen:', error);
+      } else {
+        console.log('Imagen eliminada con éxito:', filePath);
+      }
+    } catch (err) {
+      console.error('Error en la eliminación de la imagen:', err);
+    }
+  };
+  
+  // Función para llamar a la API de localhost
   const fetchResponse = async (userMessage: string) => {
     try {
       setIsLoading(true);
@@ -43,7 +116,7 @@ const ChatInterface: React.FC = () => {
         },
         body: JSON.stringify({
           message: userMessage,
-          // Include image data if available
+          // Incluir URL de la imagen en lugar del base64
           image: uploadedImage
         })
       });
@@ -64,7 +137,13 @@ const ChatInterface: React.FC = () => {
         throw new Error('Formato de respuesta inválido');
       }
       
-      // Clear the uploaded image after processing
+      // Eliminar la imagen subida después de procesarla
+      if (imageFilePath) {
+        await deleteUploadedImage(imageFilePath);
+        setImageFilePath(null);
+      }
+      
+      // Limpiar la URL de la imagen después del procesamiento
       setUploadedImage(null);
       
       // Crear el mensaje de respuesta
@@ -102,7 +181,6 @@ const ChatInterface: React.FC = () => {
     }
   };
   
-
   const handleSendMessage = (content: string) => {
     // Add user message
     const userMessage: MessageType = {
@@ -120,31 +198,30 @@ const ChatInterface: React.FC = () => {
     fetchResponse(content);
   };
   
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = async (file: File) => {
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // Store the image data as base64
-      const base64Image = reader.result as string;
-      setUploadedImage(base64Image);
+    try {
+      // Subir la imagen a Supabase y obtener la URL
+      const imageUrl = await uploadImageToSupabase(file);
       
-      toast({
-        title: "Imagen cargada",
-        description: "La imagen se ha cargado y estará disponible para el próximo mensaje.",
-        variant: "default"
-      });
-    };
-    
-    reader.onerror = () => {
+      if (imageUrl) {
+        setUploadedImage(imageUrl);
+        
+        toast({
+          title: "Imagen cargada",
+          description: "La imagen se ha cargado y estará disponible para el próximo mensaje.",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error('Error al procesar imagen:', error);
       toast({
         title: "Error",
-        description: "No se pudo cargar la imagen. Intente de nuevo.",
+        description: "No se pudo cargar la imagen. Intenta de nuevo.",
         variant: "destructive"
       });
-    };
-    
-    reader.readAsDataURL(file);
+    }
   };
   
   const handleTagClick = (tag: string) => {
@@ -196,7 +273,13 @@ const ChatInterface: React.FC = () => {
                 />
                 <button 
                   className="absolute top-1 right-1 bg-gray-900/70 rounded-full p-1 text-gray-300 hover:text-white"
-                  onClick={() => setUploadedImage(null)}
+                  onClick={() => {
+                    if (imageFilePath) {
+                      deleteUploadedImage(imageFilePath);
+                      setImageFilePath(null);
+                    }
+                    setUploadedImage(null);
+                  }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
