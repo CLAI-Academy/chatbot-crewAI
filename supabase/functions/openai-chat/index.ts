@@ -9,6 +9,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Edge function for OpenAI chat integration
+ * 
+ * REQUEST FORMAT:
+ * {
+ *   "message": string,     // The text message from the user
+ *   "image"?: string       // Optional: URL to an image from Supabase Storage
+ *                          // Format: https://[project-ref].supabase.co/storage/v1/object/public/temp_chat_images/[user-id]/[uuid]-[filename]
+ * }
+ * 
+ * If an image URL is included, it should be processed along with the message.
+ * The image URL is a temporary public URL that will be deleted after processing.
+ * 
+ * RESPONSE FORMAT:
+ * - When successful: Streaming events with OpenAI's response
+ * - When error: JSON object with error message
+ */
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -16,13 +33,18 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    const { message, image } = await req.json();
 
     if (!message) {
       throw new Error("No message provided");
     }
 
     console.log("Calling OpenAI with message:", message);
+    if (image) {
+      console.log("Image URL included:", image);
+      // If you're passing the image to OpenAI, you would need to modify this section
+      // to include the image in the API call. Currently, the code only logs the image URL.
+    }
     
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
