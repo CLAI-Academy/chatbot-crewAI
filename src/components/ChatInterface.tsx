@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -29,12 +29,15 @@ const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  // Update WebSocket URL to use relative URL - this ensures it will use the same protocol as the page
-  const wsUrl = window.location.protocol === 'https:' 
-    ? 'wss://your-backend-domain.com/ws'  // Use your actual production domain
-    : 'ws://0.0.0.0:8000/ws';             // Local development
+  // URL para WebSocket usando useMemo para evitar recreación en cada render
+  const wsUrl = useMemo(() => {
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const host = window.location.hostname;  // evita 127.0.0.1 en prod
+    const port = 8000;                      // ajusta si usas otro
+    return `${proto}://${host}:${port}/ws`;
+  }, []);  // solo se calcula una vez
 
-  // Configurar WebSocket
+  // Configurar WebSocket con la url fuera del objeto de opciones
   const { isConnected, lastMessage, sendMessage } = useWebSocket({
     url: wsUrl,
     onOpen: () => {
@@ -51,7 +54,8 @@ const ChatInterface: React.FC = () => {
         variant: "destructive"
       });
       setIsLoading(false);
-    }
+    },
+    shouldReconnect: () => false  // desactivar reconexión automática mientras se depura
   });
   
   useEffect(() => {

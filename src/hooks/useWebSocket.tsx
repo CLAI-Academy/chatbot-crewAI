@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface WebSocketHookProps {
@@ -6,6 +5,7 @@ interface WebSocketHookProps {
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (error: Event) => void;
+  shouldReconnect?: (closeEvent: CloseEvent) => boolean;
 }
 
 interface WebSocketHookResult {
@@ -15,7 +15,13 @@ interface WebSocketHookResult {
   error: Event | null;
 }
 
-const useWebSocket = ({ url, onOpen, onClose, onError }: WebSocketHookProps): WebSocketHookResult => {
+const useWebSocket = ({ 
+  url, 
+  onOpen, 
+  onClose, 
+  onError,
+  shouldReconnect = () => false
+}: WebSocketHookProps): WebSocketHookResult => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<any>(null);
   const [error, setError] = useState<Event | null>(null);
@@ -33,57 +39,73 @@ const useWebSocket = ({ url, onOpen, onClose, onError }: WebSocketHookProps): We
 
   // Inicialización y limpieza del WebSocket
   useEffect(() => {
-    // Crear una nueva conexión WebSocket
-    // Convert WebSocket URL to use secure protocol if page is loaded over HTTPS
-    let secureUrl = url;
-    if (window.location.protocol === 'https:' && url.startsWith('ws:')) {
-      secureUrl = url.replace('ws://', 'wss://');
-      console.log('Converting WebSocket to secure connection:', secureUrl);
-    }
-    
-    // Create socket with potentially modified URL
-    const socket = new WebSocket(secureUrl);
-    socketRef.current = socket;
+    let socket: WebSocket;
+    let isUnmounted = false;
 
-    // Evento: conexión establecida
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-      onOpen?.();
+    const connect = () => {
+      if (isUnmounted) return;
+      
+      // Ya no necesitamos convertir la URL aquí porque lo haremos en el componente
+      socket = new WebSocket(url);
+      socketRef.current = socket;
+
+      // Evento: conexión establecida
+      socket.onopen = () => {
+        console.log('WebSocket connected');
+        if (!isUnmounted) {
+          setIsConnected(true);
+          onOpen?.();
+        }
+      };
+
+      // Evento: mensaje recibido
+      socket.onmessage = (event) => {
+        if (isUnmounted) return;
+        
+        try {
+          const data = JSON.parse(event.data);
+          setLastMessage(data);
+        } catch (e) {
+          console.error('Error parsing WebSocket message:', e);
+          setLastMessage(event.data);
+        }
+      };
+
+      // Evento: conexión cerrada
+      socket.onclose = (closeEvent) => {
+        console.log('WebSocket disconnected', closeEvent.code);
+        if (isUnmounted) return;
+        
+        setIsConnected(false);
+        onClose?.();
+        
+        // Intentar reconectar si shouldReconnect devuelve true
+        if (shouldReconnect(closeEvent)) {
+          console.log('Intentando reconectar...');
+          setTimeout(connect, 2000); // Esperar 2 segundos antes de reconectar
+        }
+      };
+
+      // Evento: error en la conexión
+      socket.onerror = (e) => {
+        console.error('WebSocket error:', e);
+        if (!isUnmounted) {
+          setError(e);
+          onError?.(e);
+        }
+      };
     };
 
-    // Evento: mensaje recibido
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setLastMessage(data);
-      } catch (e) {
-        console.error('Error parsing WebSocket message:', e);
-        setLastMessage(event.data);
-      }
-    };
-
-    // Evento: conexión cerrada
-    socket.onclose = () => {
-      console.log('WebSocket disconnected');
-      setIsConnected(false);
-      onClose?.();
-    };
-
-    // Evento: error en la conexión
-    socket.onerror = (e) => {
-      console.error('WebSocket error:', e);
-      setError(e);
-      onError?.(e);
-    };
+    connect();
 
     // Limpiar al desmontar
     return () => {
-      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+      isUnmounted = true;
+      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         socket.close();
       }
     };
-  }, [url, onOpen, onClose, onError]);
+  }, [url, onOpen, onClose, onError, shouldReconnect]);
 
   return { isConnected, lastMessage, sendMessage, error };
 };
