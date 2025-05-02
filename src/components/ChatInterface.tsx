@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -30,9 +29,14 @@ const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
+  // Update WebSocket URL to use relative URL - this ensures it will use the same protocol as the page
+  const wsUrl = window.location.protocol === 'https:' 
+    ? 'wss://your-backend-domain.com/ws'  // Use your actual production domain
+    : 'ws://0.0.0.0:8000/ws';             // Local development
+
   // Configurar WebSocket
   const { isConnected, lastMessage, sendMessage } = useWebSocket({
-    url: 'ws://0.0.0.0:8000/ws',
+    url: wsUrl,
     onOpen: () => {
       console.log('Conexión WebSocket establecida');
     },

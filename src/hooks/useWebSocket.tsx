@@ -34,7 +34,15 @@ const useWebSocket = ({ url, onOpen, onClose, onError }: WebSocketHookProps): We
   // Inicialización y limpieza del WebSocket
   useEffect(() => {
     // Crear una nueva conexión WebSocket
-    const socket = new WebSocket(url);
+    // Convert WebSocket URL to use secure protocol if page is loaded over HTTPS
+    let secureUrl = url;
+    if (window.location.protocol === 'https:' && url.startsWith('ws:')) {
+      secureUrl = url.replace('ws://', 'wss://');
+      console.log('Converting WebSocket to secure connection:', secureUrl);
+    }
+    
+    // Create socket with potentially modified URL
+    const socket = new WebSocket(secureUrl);
     socketRef.current = socket;
 
     // Evento: conexión establecida
