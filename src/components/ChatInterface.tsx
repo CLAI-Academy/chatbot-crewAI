@@ -4,12 +4,20 @@ import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
 import ChatInput from './ChatInput';
 import WelcomeMessage from './WelcomeMessage';
-import SuggestionTags from './SuggestionTags';
+import AgentFlow from './AgentFlow';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/hooks/useAuth';
+import useWebSocket from '@/hooks/useWebSocket';
+
+// Interfaz para la información del flujo de agentes
+interface AgentFlowInfo {
+  mode: string;
+  agents: string[];
+  currentAgent: string | null;
+}
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -18,12 +26,29 @@ const ChatInterface: React.FC = () => {
   const [inputCentered, setInputCentered] = useState(true);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [imageFilePath, setImageFilePath] = useState<string | null>(null);
+  const [agentFlowInfo, setAgentFlowInfo] = useState<AgentFlowInfo | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  
-  const suggestionTags = [
-    "Future", "Futuristic", "Futures"
-  ];
+
+  // Configurar WebSocket
+  const { isConnected, lastMessage, sendMessage } = useWebSocket({
+    url: 'ws://0.0.0.0:8000/ws',
+    onOpen: () => {
+      console.log('Conexión WebSocket establecida');
+    },
+    onClose: () => {
+      console.log('Conexión WebSocket cerrada');
+      setIsLoading(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar al servidor. Intenta de nuevo más tarde.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
+  });
   
   useEffect(() => {
     scrollToBottom();
@@ -37,6 +62,63 @@ const ChatInterface: React.FC = () => {
       }
     };
   }, [imageFilePath]);
+
+  // Procesar mensajes recibidos por WebSocket
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    console.log('WebSocket message received:', lastMessage);
+
+    if (lastMessage.status === 'pensando') {
+      setIsLoading(true);
+      return;
+    }
+
+    if (lastMessage.mode && lastMessage.agents) {
+      // Actualizar información del flujo de agentes
+      setAgentFlowInfo({
+        mode: lastMessage.mode,
+        agents: lastMessage.agents,
+        currentAgent: lastMessage.actual_agent || null
+      });
+    }
+
+    if (lastMessage.actual_agent && agentFlowInfo) {
+      // Actualizar solo el agente actual
+      setAgentFlowInfo(prev => prev ? {
+        ...prev,
+        currentAgent: lastMessage.actual_agent
+      } : null);
+    }
+
+    if (lastMessage.status === 'completed' && lastMessage.resultado) {
+      // Mensaje completado, mostrar respuesta
+      const aiMessage: MessageType = {
+        id: Date.now().toString(),
+        content: lastMessage.resultado,
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+      
+      // Limpiar estado de agentes cuando se completa
+      setTimeout(() => {
+        setAgentFlowInfo(null);
+      }, 2000);
+    }
+
+    if (lastMessage.error) {
+      toast({
+        title: "Error",
+        description: lastMessage.error,
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      setAgentFlowInfo(null);
+    }
+  }, [lastMessage, agentFlowInfo]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,87 +184,18 @@ const ChatInterface: React.FC = () => {
     }
   };
   
-  // Función para llamar a la API de localhost
-  const fetchResponse = async (userMessage: string) => {
-    try {
-      setIsLoading(true);
-      
-      console.log("Enviando mensaje a la API local:", userMessage);
-      
-      const response = await fetch('http://localhost:8000/conversation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          // Incluir URL de la imagen en lugar del base64
-          image: uploadedImage
-        })
-      });
-      
-      if (!response.ok) {
-        console.error('Error de respuesta:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('Detalles del error:', errorText);
-        throw new Error(`Error en la API: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log("Respuesta recibida:", data);
-      
-      // Verificar que la respuesta tenga el formato correcto
-      if (!data || typeof data.response !== 'string') {
-        console.error('Formato de respuesta inválido:', data);
-        throw new Error('Formato de respuesta inválido');
-      }
-      
-      // Eliminar la imagen subida después de procesarla
-      if (imageFilePath) {
-        await deleteUploadedImage(imageFilePath);
-        setImageFilePath(null);
-      }
-      
-      // Limpiar la URL de la imagen después del procesamiento
-      setUploadedImage(null);
-      
-      // Crear el mensaje de respuesta
-      const aiMessage: MessageType = {
-        id: Date.now().toString(),
-        content: data.response,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      // Añadir el mensaje a la conversación de forma segura
-      setMessages(prev => [...prev, aiMessage]);
-      
-    } catch (error) {
-      console.error('Error al obtener respuesta:', error);
-      
-      // Añadir mensaje de error
-      setMessages(prev => [
-        ...prev, 
-        {
-          id: Date.now().toString(),
-          content: 'Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta de nuevo.',
-          sender: 'ai',
-          timestamp: new Date()
-        }
-      ]);
-      
+  const handleSendMessage = (content: string) => {
+    // Validar conexión WebSocket
+    if (!isConnected) {
       toast({
-        title: "Error",
-        description: "Error al conectar con la API. Por favor, intenta de nuevo.",
+        title: "Error de conexión",
+        description: "No estás conectado al servidor. Intenta recargar la página.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
+      return;
     }
-  };
-  
-  const handleSendMessage = (content: string) => {
-    // Add user message
+
+    // Añadir mensaje del usuario
     const userMessage: MessageType = {
       id: Date.now().toString(),
       content,
@@ -193,9 +206,20 @@ const ChatInterface: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
     setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
+    setIsLoading(true);
     
-    // Usar la API de localhost en lugar de OpenAI
-    fetchResponse(content);
+    // Enviar mensaje al servidor WebSocket
+    sendMessage({
+      message: content,
+      image: uploadedImage
+    });
+    
+    // Limpiar la URL de la imagen después del envío
+    if (imageFilePath) {
+      deleteUploadedImage(imageFilePath);
+      setImageFilePath(null);
+    }
+    setUploadedImage(null);
   };
   
   const handleImageUpload = async (file: File) => {
@@ -224,10 +248,6 @@ const ChatInterface: React.FC = () => {
     }
   };
   
-  const handleTagClick = (tag: string) => {
-    handleSendMessage(`Cuéntame sobre ${tag}`);
-  };
-  
   return (
     <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30 relative">
       <ChatHeader />
@@ -252,7 +272,19 @@ const ChatInterface: React.FC = () => {
                 <ChatMessage key={message.id} message={message} />
               ))}
               <div ref={messagesEndRef} />
-              {isLoading && (
+              
+              {/* Visualización de flujo de agentes */}
+              {agentFlowInfo && (
+                <div className="my-4">
+                  <AgentFlow 
+                    mode={agentFlowInfo.mode}
+                    agents={agentFlowInfo.agents}
+                    currentAgent={agentFlowInfo.currentAgent}
+                  />
+                </div>
+              )}
+              
+              {isLoading && !agentFlowInfo && (
                 <div className="flex justify-start my-4">
                   <div className="flex space-x-2 p-3 bg-gray-800/80 rounded-lg">
                     <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -263,6 +295,7 @@ const ChatInterface: React.FC = () => {
               )}
             </div>
           </ScrollArea>
+          
           {uploadedImage && (
             <div className="px-4 pb-2">
               <div className="relative bg-gray-800/50 rounded-lg p-2 inline-block max-w-[200px]">
@@ -289,6 +322,7 @@ const ChatInterface: React.FC = () => {
               </div>
             </div>
           )}
+          
           <div className="mt-auto">
             <ChatInput 
               onSendMessage={handleSendMessage}
