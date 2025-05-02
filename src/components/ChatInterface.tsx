@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -57,7 +56,7 @@ const ChatInterface: React.FC = () => {
       });
       setIsLoading(false);
     },
-    shouldReconnect: () => false,
+    shouldReconnect: () => true, // Always try to reconnect on unexpected disconnection
     autoConnect: false // Don't connect automatically on component mount
   });
   
@@ -205,8 +204,8 @@ const ChatInterface: React.FC = () => {
     // Check WebSocket connection status before proceeding
     if (hasInitiatedChat && !isConnected) {
       toast({
-        title: "Connection error",
-        description: "Not connected to the server. Trying to reconnect...",
+        title: "Reconnecting...",
+        description: "Trying to connect to the server...",
         variant: "default"
       });
       connect(); // Try to reconnect
@@ -226,17 +225,32 @@ const ChatInterface: React.FC = () => {
     setIsLoading(true);
     
     // Send message to WebSocket server
-    sendMessage({
-      message: content,
-      image: uploadedImage
-    });
-    
-    // Clear image URL after sending
-    if (imageFilePath) {
-      deleteUploadedImage(imageFilePath);
-      setImageFilePath(null);
+    try {
+      console.log('Preparing to send message:', {
+        message: content,
+        image: uploadedImage
+      });
+      
+      sendMessage({
+        message: content,
+        image: uploadedImage
+      });
+      
+      // Clear image URL after sending
+      if (imageFilePath) {
+        deleteUploadedImage(imageFilePath);
+        setImageFilePath(null);
+      }
+      setUploadedImage(null);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
     }
-    setUploadedImage(null);
   };
   
   const handleImageUpload = async (file: File) => {

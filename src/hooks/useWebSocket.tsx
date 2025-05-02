@@ -15,7 +15,7 @@ interface WebSocketHookResult {
   lastMessage: any;
   sendMessage: (message: any) => void;
   error: Event | null;
-  connect: () => void;  // New method to manually initiate connection
+  connect: () => void;  // Method to manually initiate connection
 }
 
 const useWebSocket = ({ 
@@ -72,6 +72,7 @@ const useWebSocket = ({
         
         try {
           const data = JSON.parse(event.data);
+          console.log('WebSocket message received:', data);
           setLastMessage(data);
         } catch (e) {
           console.error('Error parsing WebSocket message:', e);
@@ -118,6 +119,7 @@ const useWebSocket = ({
       const checkAndSend = setInterval(() => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
           clearInterval(checkAndSend);
+          console.log('Sending message:', message);
           socketRef.current.send(typeof message === 'string' ? message : JSON.stringify(message));
         } else if (socketRef.current?.readyState === WebSocket.CLOSED || socketRef.current?.readyState === WebSocket.CLOSING) {
           clearInterval(checkAndSend);
@@ -128,6 +130,7 @@ const useWebSocket = ({
       return;
     }
     
+    console.log('Sending message:', message);
     socketRef.current.send(typeof message === 'string' ? message : JSON.stringify(message));
   }, [connect]);
 
