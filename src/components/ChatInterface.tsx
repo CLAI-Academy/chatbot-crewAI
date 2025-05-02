@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -11,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/hooks/useAuth';
 import useWebSocket from '@/hooks/useWebSocket';
 
-// Interfaz para la información del flujo de agentes
+// Interface for agent flow information
 interface AgentFlowInfo {
   mode: string;
   agents: string[];
@@ -26,36 +27,38 @@ const ChatInterface: React.FC = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [imageFilePath, setImageFilePath] = useState<string | null>(null);
   const [agentFlowInfo, setAgentFlowInfo] = useState<AgentFlowInfo | null>(null);
+  const [hasInitiatedChat, setHasInitiatedChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  // URL para WebSocket usando useMemo para evitar recreación en cada render
+  // URL for WebSocket using useMemo to avoid recreation on each render
   const wsUrl = useMemo(() => {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const host = window.location.hostname;  // evita 127.0.0.1 en prod
-    const port = 8000;                      // ajusta si usas otro
+    const host = window.location.hostname;
+    const port = 8000;
     return `${proto}://${host}:${port}/ws`;
-  }, []);  // solo se calcula una vez
+  }, []);
 
-  // Configurar WebSocket con la url fuera del objeto de opciones
-  const { isConnected, lastMessage, sendMessage } = useWebSocket({
+  // Configure WebSocket with autoConnect set to false
+  const { isConnected, lastMessage, sendMessage, error, connect } = useWebSocket({
     url: wsUrl,
     onOpen: () => {
-      console.log('Conexión WebSocket establecida');
+      console.log('WebSocket connection established');
     },
     onClose: () => {
-      console.log('Conexión WebSocket cerrada');
+      console.log('WebSocket connection closed');
       setIsLoading(false);
     },
     onError: () => {
       toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar al servidor. Intenta de nuevo más tarde.",
+        title: "Connection error",
+        description: "Could not connect to the server. Please try again later.",
         variant: "destructive"
       });
       setIsLoading(false);
     },
-    shouldReconnect: () => false  // desactivar reconexión automática mientras se depura
+    shouldReconnect: () => false,
+    autoConnect: false // Don't connect automatically on component mount
   });
   
   useEffect(() => {
@@ -63,7 +66,7 @@ const ChatInterface: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
-    // Limpiar la imagen cargada al desmontar el componente
+    // Clean up uploaded image when component unmounts
     return () => {
       if (imageFilePath) {
         deleteUploadedImage(imageFilePath);
@@ -71,7 +74,7 @@ const ChatInterface: React.FC = () => {
     };
   }, [imageFilePath]);
 
-  // Procesar mensajes recibidos por WebSocket
+  // Process messages received from WebSocket
   useEffect(() => {
     if (!lastMessage) return;
 
@@ -83,7 +86,7 @@ const ChatInterface: React.FC = () => {
     }
 
     if (lastMessage.mode && lastMessage.agents) {
-      // Actualizar información del flujo de agentes
+      // Update agent flow information
       setAgentFlowInfo({
         mode: lastMessage.mode,
         agents: lastMessage.agents,
@@ -92,7 +95,7 @@ const ChatInterface: React.FC = () => {
     }
 
     if (lastMessage.actual_agent && agentFlowInfo) {
-      // Actualizar solo el agente actual
+      // Update only the current agent
       setAgentFlowInfo(prev => prev ? {
         ...prev,
         currentAgent: lastMessage.actual_agent
@@ -100,7 +103,7 @@ const ChatInterface: React.FC = () => {
     }
 
     if (lastMessage.status === 'completed' && lastMessage.resultado) {
-      // Mensaje completado, mostrar respuesta
+      // Message completed, show response
       const aiMessage: MessageType = {
         id: Date.now().toString(),
         content: lastMessage.resultado,
@@ -111,7 +114,7 @@ const ChatInterface: React.FC = () => {
       setMessages(prev => [...prev, aiMessage]);
       setIsLoading(false);
       
-      // Limpiar estado de agentes cuando se completa
+      // Clear agent state when completed
       setTimeout(() => {
         setAgentFlowInfo(null);
       }, 2000);
@@ -193,17 +196,23 @@ const ChatInterface: React.FC = () => {
   };
   
   const handleSendMessage = (content: string) => {
-    // Validar conexión WebSocket
-    if (!isConnected) {
-      toast({
-        title: "Error de conexión",
-        description: "No estás conectado al servidor. Intenta recargar la página.",
-        variant: "destructive"
-      });
-      return;
+    // Initialize WebSocket connection if this is the first message
+    if (!hasInitiatedChat) {
+      setHasInitiatedChat(true);
+      connect(); // Manually connect to WebSocket
     }
 
-    // Añadir mensaje del usuario
+    // Check WebSocket connection status before proceeding
+    if (hasInitiatedChat && !isConnected) {
+      toast({
+        title: "Connection error",
+        description: "Not connected to the server. Trying to reconnect...",
+        variant: "default"
+      });
+      connect(); // Try to reconnect
+    }
+
+    // Add user message
     const userMessage: MessageType = {
       id: Date.now().toString(),
       content,
@@ -213,16 +222,16 @@ const ChatInterface: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setShowWelcome(false);
-    setInputCentered(false); // Mover el input abajo solo cuando se envía un mensaje
+    setInputCentered(false); // Move input to bottom only when a message is sent
     setIsLoading(true);
     
-    // Enviar mensaje al servidor WebSocket
+    // Send message to WebSocket server
     sendMessage({
       message: content,
       image: uploadedImage
     });
     
-    // Limpiar la URL de la imagen después del envío
+    // Clear image URL after sending
     if (imageFilePath) {
       deleteUploadedImage(imageFilePath);
       setImageFilePath(null);
