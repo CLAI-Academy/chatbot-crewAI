@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface WebSocketHookProps {
@@ -52,14 +51,15 @@ const useWebSocket = ({
     
     try {
       const secureUrl = getSecureUrl(url);
-      console.log(`Connecting to WebSocket at ${secureUrl}`);
+      console.log(`🛠️ Intentando conectar a WebSocket en: ${secureUrl}`);
       
       const socket = new WebSocket(secureUrl);
+      console.log(`🔧 Estado del WebSocket: ${socket.readyState} (0=CONNECTING)`);
       socketRef.current = socket;
 
       // Event: connection established
       socket.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket conectado correctamente');
         if (!isUnmountedRef.current) {
           setIsConnected(true);
           onOpen?.();
@@ -70,19 +70,20 @@ const useWebSocket = ({
       socket.onmessage = (event) => {
         if (isUnmountedRef.current) return;
         
+        console.log('📨 Mensaje recibido del servidor:', event.data);
         try {
           const data = JSON.parse(event.data);
-          console.log('WebSocket message received:', data);
+          console.log('🔄 Mensaje procesado:', data);
           setLastMessage(data);
         } catch (e) {
-          console.error('Error parsing WebSocket message:', e);
+          console.error('❌ Error al parsear mensaje WebSocket:', e);
           setLastMessage(event.data);
         }
       };
 
       // Event: connection closed
       socket.onclose = (closeEvent) => {
-        console.log('WebSocket disconnected', closeEvent.code);
+        console.log(`🚫 WebSocket desconectado. Código: ${closeEvent.code}, Razón: ${closeEvent.reason || 'No especificada'}`);
         if (isUnmountedRef.current) return;
         
         setIsConnected(false);
@@ -90,21 +91,32 @@ const useWebSocket = ({
         
         // Try to reconnect if shouldReconnect returns true
         if (shouldReconnect(closeEvent)) {
-          console.log('Attempting to reconnect...');
+          console.log('🔄 Intentando reconectar en 2s...');
           setTimeout(connect, 2000); // Wait 2 seconds before reconnecting
         }
       };
 
       // Event: connection error
       socket.onerror = (e) => {
-        console.error('WebSocket error:', e);
+        console.error('⚠️ Error en WebSocket:', e);
+        // Intentar extraer más información del error
+        try {
+          console.error('⚠️ Detalles del error:', JSON.stringify(e));
+        } catch {
+          console.error('⚠️ No se pudo serializar el error para más detalles');
+        }
         if (!isUnmountedRef.current) {
           setError(e);
           onError?.(e);
         }
       };
     } catch (err) {
-      console.error('Failed to create WebSocket connection:', err);
+      console.error('⛔ Error al crear conexión WebSocket:', err);
+      try {
+        console.error('⛔ Detalles del error:', JSON.stringify(err));
+      } catch {
+        console.error('⛔ No se pudo serializar el error para más detalles');
+      }
       onError?.(err as Event);
     }
   }, [url, onOpen, onClose, onError, shouldReconnect]);
@@ -113,24 +125,28 @@ const useWebSocket = ({
   const sendMessage = useCallback((message: any) => {
     // If socket doesn't exist or is not open, connect first
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      console.log(`📤 Socket no disponible para enviar. Estado: ${socketRef.current?.readyState || 'no inicializado'}`);
+      console.log('🔄 Iniciando conexión para enviar mensaje...');
       connect();
       
       // Queue the message to be sent once connected
+      console.log('⏳ Esperando conexión para enviar mensaje...');
       const checkAndSend = setInterval(() => {
+        console.log(`🔍 Verificando estado conexión: ${socketRef.current?.readyState}`);
         if (socketRef.current?.readyState === WebSocket.OPEN) {
           clearInterval(checkAndSend);
-          console.log('Sending message:', message);
+          console.log('📤 Conexión lista, enviando mensaje:', message);
           socketRef.current.send(typeof message === 'string' ? message : JSON.stringify(message));
         } else if (socketRef.current?.readyState === WebSocket.CLOSED || socketRef.current?.readyState === WebSocket.CLOSING) {
           clearInterval(checkAndSend);
-          console.error('WebSocket connection failed, cannot send message');
+          console.error('❌ Conexión WebSocket fallida, no se puede enviar mensaje');
         }
       }, 100);
       
       return;
     }
     
-    console.log('Sending message:', message);
+    console.log('📤 Enviando mensaje por WebSocket:', message);
     socketRef.current.send(typeof message === 'string' ? message : JSON.stringify(message));
   }, [connect]);
 

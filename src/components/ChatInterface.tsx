@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -9,7 +9,6 @@ import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/hooks/useAuth';
-import useWebSocket from '@/hooks/useWebSocket';
 
 // Interface for agent flow information
 interface AgentFlowInfo {
@@ -27,38 +26,157 @@ const ChatInterface: React.FC = () => {
   const [imageFilePath, setImageFilePath] = useState<string | null>(null);
   const [agentFlowInfo, setAgentFlowInfo] = useState<AgentFlowInfo | null>(null);
   const [hasInitiatedChat, setHasInitiatedChat] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [ws, setWs] = useState<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  // URL for WebSocket using useMemo to avoid recreation on each render
-  const wsUrl = useMemo(() => {
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const host = window.location.hostname;
-    const port = 8000;
-    return `${proto}://${host}:${port}/ws`;
-  }, []);
+  // URL for WebSocket
+  const wsUrl = "ws://127.0.0.1:8000/ws";
+  console.log("🔌 WebSocket URL configurada:", wsUrl);
 
-  // Configure WebSocket with autoConnect set to false
-  const { isConnected, lastMessage, sendMessage, error, connect } = useWebSocket({
-    url: wsUrl,
-    onOpen: () => {
-      console.log('WebSocket connection established');
-    },
-    onClose: () => {
-      console.log('WebSocket connection closed');
-      setIsLoading(false);
-    },
-    onError: () => {
+  // Función para conectar WebSocket
+  const connectWebSocket = () => {
+    console.log('🚀 Iniciando conexión WebSocket directa...');
+    
+    try {
+      const socket = new WebSocket(wsUrl);
+      
+      // Evento: conexión establecida
+      socket.onopen = () => {
+        console.log('✅ WebSocket conexión establecida');
+        setIsConnected(true);
+      };
+      
+      // Evento: mensaje recibido
+      socket.onmessage = (event) => {
+        console.log('📨 Mensaje WebSocket recibido:', event.data);
+        try {
+          const data = JSON.parse(event.data);
+          console.log('🔄 Datos procesados:', data);
+          
+          if (data.connected) {
+            console.log('✅ Conexión confirmada, client_id:', data.client_id);
+            return;
+          }
+          
+          if (data.status === 'pensando') {
+            setIsLoading(true);
+            return;
+          }
+          
+          if (data.mode && data.agents) {
+            // Actualizar información del flujo de agentes
+            setAgentFlowInfo({
+              mode: data.mode,
+              agents: data.agents,
+              currentAgent: data.actual_agent || null
+            });
+          }
+          
+          if (data.actual_agent && agentFlowInfo) {
+            // Actualizar solo el agente actual
+            setAgentFlowInfo(prev => prev ? {
+              ...prev,
+              currentAgent: data.actual_agent
+            } : null);
+          }
+          
+          if (data.status === 'completed' && data.resultado) {
+            // Mensaje completado, mostrar respuesta
+            const aiMessage: MessageType = {
+              id: Date.now().toString(),
+              content: data.resultado,
+              sender: 'ai',
+              timestamp: new Date()
+            };
+            
+            setMessages(prev => [...prev, aiMessage]);
+            setIsLoading(false);
+            
+            // Limpiar estado de agente cuando se completa
+            setTimeout(() => {
+              setAgentFlowInfo(null);
+            }, 2000);
+          }
+          
+          if (data.error) {
+            console.error('❌ Error en respuesta WebSocket:', data.error);
+            toast({
+              title: "Error",
+              description: data.error,
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            setAgentFlowInfo(null);
+          }
+        } catch (e) {
+          console.error('❌ Error procesando mensaje WebSocket:', e);
+        }
+      };
+      
+      // Evento: conexión cerrada
+      socket.onclose = (event) => {
+        console.log(`🔴 WebSocket desconectado. Código: ${event.code}, Razón: ${event.reason || 'No especificada'}`);
+        setIsConnected(false);
+        setIsLoading(false);
+      };
+      
+      // Evento: error de conexión
+      socket.onerror = (error) => {
+        console.error('⚠️ Error en WebSocket:', error);
+        toast({
+          title: "Error de conexión",
+          description: "No se pudo conectar al servidor. Intente de nuevo más tarde.",
+          variant: "destructive"
+        });
+        setIsConnected(false);
+        setIsLoading(false);
+      };
+      
+      setWs(socket);
+    } catch (err) {
+      console.error('⛔ Error al crear conexión WebSocket:', err);
       toast({
-        title: "Connection error",
-        description: "Could not connect to the server. Please try again later.",
+        title: "Error",
+        description: "No se pudo establecer la conexión WebSocket",
         variant: "destructive"
       });
-      setIsLoading(false);
-    },
-    shouldReconnect: () => true, // Always try to reconnect on unexpected disconnection
-    autoConnect: false // Don't connect automatically on component mount
-  });
+    }
+  };
+  
+  // Función para enviar mensaje por WebSocket
+  const sendWebSocketMessage = (content: string, image: string | null) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.error('⚠️ WebSocket no conectado al intentar enviar mensaje');
+      return false;
+    }
+    
+    try {
+      const messageData = {
+        message: content,
+        image: image
+      };
+      
+      console.log('📤 Enviando mensaje por WebSocket:', messageData);
+      ws.send(JSON.stringify(messageData));
+      console.log('✅ Mensaje enviado correctamente');
+      return true;
+    } catch (err) {
+      console.error('❌ Error enviando mensaje:', err);
+      return false;
+    }
+  };
+  
+  // Limpiar WebSocket al desmontar componente
+  useEffect(() => {
+    return () => {
+      if (ws) {
+        console.log('🧹 Cerrando conexión WebSocket al desmontar');
+        ws.close(1000, "Componente desmontado");
+      }
+    };
+  }, [ws]);
   
   useEffect(() => {
     scrollToBottom();
@@ -72,63 +190,6 @@ const ChatInterface: React.FC = () => {
       }
     };
   }, [imageFilePath]);
-
-  // Process messages received from WebSocket
-  useEffect(() => {
-    if (!lastMessage) return;
-
-    console.log('WebSocket message received:', lastMessage);
-
-    if (lastMessage.status === 'pensando') {
-      setIsLoading(true);
-      return;
-    }
-
-    if (lastMessage.mode && lastMessage.agents) {
-      // Update agent flow information
-      setAgentFlowInfo({
-        mode: lastMessage.mode,
-        agents: lastMessage.agents,
-        currentAgent: lastMessage.actual_agent || null
-      });
-    }
-
-    if (lastMessage.actual_agent && agentFlowInfo) {
-      // Update only the current agent
-      setAgentFlowInfo(prev => prev ? {
-        ...prev,
-        currentAgent: lastMessage.actual_agent
-      } : null);
-    }
-
-    if (lastMessage.status === 'completed' && lastMessage.resultado) {
-      // Message completed, show response
-      const aiMessage: MessageType = {
-        id: Date.now().toString(),
-        content: lastMessage.resultado,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-      
-      // Clear agent state when completed
-      setTimeout(() => {
-        setAgentFlowInfo(null);
-      }, 2000);
-    }
-
-    if (lastMessage.error) {
-      toast({
-        title: "Error",
-        description: lastMessage.error,
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      setAgentFlowInfo(null);
-    }
-  }, [lastMessage, agentFlowInfo]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -195,20 +256,14 @@ const ChatInterface: React.FC = () => {
   };
   
   const handleSendMessage = (content: string) => {
+    console.log('📤 Iniciando envío de mensaje:', content);
+    console.log('⚡ Estado conexión antes de enviar:', isConnected ? 'Conectado' : 'Desconectado');
+    
     // Initialize WebSocket connection if this is the first message
     if (!hasInitiatedChat) {
+      console.log('🚀 Primer mensaje, iniciando conexión WebSocket...');
       setHasInitiatedChat(true);
-      connect(); // Manually connect to WebSocket
-    }
-
-    // Check WebSocket connection status before proceeding
-    if (hasInitiatedChat && !isConnected) {
-      toast({
-        title: "Reconnecting...",
-        description: "Trying to connect to the server...",
-        variant: "default"
-      });
-      connect(); // Try to reconnect
+      connectWebSocket(); // Conectar WebSocket
     }
 
     // Add user message
@@ -224,33 +279,49 @@ const ChatInterface: React.FC = () => {
     setInputCentered(false); // Move input to bottom only when a message is sent
     setIsLoading(true);
     
-    // Send message to WebSocket server
-    try {
-      console.log('Preparing to send message:', {
-        message: content,
-        image: uploadedImage
-      });
+    // Si el WebSocket no está conectado aún, espera un poco e intenta enviar
+    if (!isConnected) {
+      console.log('⏳ WebSocket no conectado, esperando conexión...');
       
-      sendMessage({
-        message: content,
-        image: uploadedImage
-      });
-      
-      // Clear image URL after sending
-      if (imageFilePath) {
-        deleteUploadedImage(imageFilePath);
-        setImageFilePath(null);
+      // Reintentar conexión si ya se había iniciado chat
+      if (hasInitiatedChat) {
+        console.log('🔄 Reintentando conexión WebSocket...');
+        connectWebSocket();
       }
-      setUploadedImage(null);
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Esperar y luego intentar enviar el mensaje
+      const maxRetries = 10;
+      let retryCount = 0;
+      
+      const retryInterval = setInterval(() => {
+        retryCount++;
+        console.log(`🔄 Intento ${retryCount}/${maxRetries} de enviar mensaje...`);
+        
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          clearInterval(retryInterval);
+          sendWebSocketMessage(content, uploadedImage);
+        } else if (retryCount >= maxRetries) {
+          clearInterval(retryInterval);
+          console.error('❌ No se pudo establecer conexión después de varios intentos');
+          toast({
+            title: "Error de conexión",
+            description: "No se pudo conectar al servidor después de varios intentos",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+        }
+      }, 500);
+    } else {
+      // WebSocket ya conectado, enviar directamente
+      sendWebSocketMessage(content, uploadedImage);
     }
+    
+    // Clear image URL after sending
+    if (imageFilePath) {
+      deleteUploadedImage(imageFilePath);
+      setImageFilePath(null);
+    }
+    setUploadedImage(null);
   };
   
   const handleImageUpload = async (file: File) => {
