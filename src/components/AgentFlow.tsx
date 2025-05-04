@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Bot } from 'lucide-react';
 
 interface AgentNodeProps {
   name: string;
@@ -37,15 +37,40 @@ const AgentNode: React.FC<AgentNodeProps> = ({ name, isActive, isCompleted, inde
           transition={{ duration: 0.5 }}
         />
         
-        {/* Inner ring */}
+        {/* Robot icon container - replacing inner ring */}
         <motion.div 
-          className={`absolute inset-3 rounded-full border-2 ${isActive ? 'border-[#3B82F6]' : isCompleted ? 'border-green-400' : 'border-gray-400'} opacity-90`}
+          className="absolute inset-0 flex items-center justify-center"
           animate={{ 
-            borderColor: isActive ? '#3B82F6' : isCompleted ? '#10B981' : '#4B5563',
             rotate: isActive ? 360 : 0
           }}
           transition={{ duration: isActive ? 8 : 0.5, repeat: isActive ? Infinity : 0, ease: "linear" }}
-        />
+        >
+          <motion.div
+            className={`flex items-center justify-center w-16 h-16 rounded-full ${
+              isActive 
+                ? 'bg-[#3B82F6]/20' 
+                : isCompleted 
+                  ? 'bg-green-400/20' 
+                  : 'bg-gray-400/20'
+            }`}
+            animate={{ 
+              scale: isActive ? [1, 1.1, 1] : 1 
+            }}
+            transition={{ duration: 1.5, repeat: isActive ? Infinity : 0, repeatType: "reverse" }}
+          >
+            <Bot 
+              className={`${
+                isActive 
+                  ? 'text-[#3B82F6]' 
+                  : isCompleted 
+                    ? 'text-green-400' 
+                    : 'text-gray-400'
+              }`}
+              size={isActive ? 32 : 28}
+              strokeWidth={isActive ? 2.5 : 2}
+            />
+          </motion.div>
+        </motion.div>
         
         {/* Center glow effect */}
         {isActive && (
