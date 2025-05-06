@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  Legend, LineChart, Line 
+  Legend, LineChart, Line, Cell
 } from 'recharts';
 import { Comparison } from './FinanceResponse';
 
