@@ -4,6 +4,7 @@ import ChatMessage, { MessageType } from './ChatMessage';
 import ChatInput from './ChatInput';
 import WelcomeMessage from './WelcomeMessage';
 import AgentFlow from './AgentFlow';
+import FinanceResponse from './FinanceResponse/FinanceResponse';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +29,7 @@ const ChatInterface: React.FC = () => {
   const [hasInitiatedChat, setHasInitiatedChat] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [financeData, setFinanceData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -83,7 +85,33 @@ const ChatInterface: React.FC = () => {
           }
           
           if (data.status === 'completed' && data.resultado) {
-            // Mensaje completado, mostrar respuesta
+            // Check if the result is a JSON structure for finance response
+            if (data.mode === 'finanzas' && typeof data.resultado === 'string') {
+              try {
+                // Try to parse the result as JSON for finance mode
+                const jsonResult = JSON.parse(data.resultado);
+                if (jsonResult.escenarios && jsonResult.comparaciones) {
+                  console.log('📊 Detectado resultado de finanzas estructurado:', jsonResult);
+                  setFinanceData(jsonResult);
+                  
+                  // Add a simple text message for the chat history
+                  const aiMessage: MessageType = {
+                    id: Date.now().toString(),
+                    content: "He analizado tu consulta financiera. A continuación te presento diferentes escenarios y recomendaciones:",
+                    sender: 'ai',
+                    timestamp: new Date()
+                  };
+                  
+                  setMessages(prev => [...prev, aiMessage]);
+                  setIsLoading(false);
+                  return;
+                }
+              } catch (e) {
+                console.log('No es un JSON válido para finanzas, mostrando como texto normal');
+              }
+            }
+            
+            // Regular message handling if not finance data or parsing failed
             const aiMessage: MessageType = {
               id: Date.now().toString(),
               content: data.resultado,
@@ -180,7 +208,7 @@ const ChatInterface: React.FC = () => {
   
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, financeData]);
 
   useEffect(() => {
     // Clean up uploaded image when component unmounts
@@ -264,6 +292,11 @@ const ChatInterface: React.FC = () => {
       console.log('🚀 Primer mensaje, iniciando conexión WebSocket...');
       setHasInitiatedChat(true);
       connectWebSocket(); // Conectar WebSocket
+    }
+
+    // Reset finance data when sending a new message
+    if (financeData) {
+      setFinanceData(null);
     }
 
     // Add user message
@@ -373,6 +406,10 @@ const ChatInterface: React.FC = () => {
               {messages.map(message => (
                 <ChatMessage key={message.id} message={message} />
               ))}
+              
+              {/* Display finance response when available */}
+              {financeData && <FinanceResponse data={financeData} />}
+              
               <div ref={messagesEndRef} />
               
               {/* Visualización de flujo de agentes */}
