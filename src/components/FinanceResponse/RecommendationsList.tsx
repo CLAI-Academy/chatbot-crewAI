@@ -9,6 +9,8 @@ interface RecommendationsListProps {
 }
 
 export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recommendations }) => {
+  console.log("🔍 RecommendationsList - Recomendaciones:", recommendations);
+  
   // Transform recommendations object into an array of items
   const recommendationItems = Object.entries(recommendations).map(([key, value]) => {
     let title = key.replace(/_/g, ' ');
@@ -83,6 +85,20 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
       icon
     };
   });
+
+  if (recommendationItems.length === 0) {
+    console.warn("⚠️ No hay recomendaciones para mostrar");
+    return (
+      <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
+        <CardHeader className="bg-indigo-900/20 border-b border-gray-700/30">
+          <CardTitle className="text-lg">Recomendaciones</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <p className="text-gray-400">No hay recomendaciones disponibles.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30 h-full">

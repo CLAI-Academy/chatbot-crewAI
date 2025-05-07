@@ -74,6 +74,15 @@ interface FinanceResponseProps {
 const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Añadir logs para depuración
+  useEffect(() => {
+    console.log('🔍 FinanceResponse - Datos recibidos:', data);
+    console.log('📋 Escenarios:', data.escenarios?.length || 0);
+    console.log('📊 Análisis de mercado:', data.analisis_mercado ? 'Presente' : 'Ausente');
+    console.log('📈 Comparaciones:', data.comparaciones?.length || 0);
+    console.log('📝 Recomendaciones:', Object.keys(data.recomendaciones || {}));
+  }, [data]);
+  
   // Scroll into view when component mounts
   useEffect(() => {
     if (containerRef.current) {
@@ -85,6 +94,16 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
       }, 300);
     }
   }, []);
+  
+  // Verificar si los datos son válidos
+  if (!data || !data.escenarios || data.escenarios.length === 0) {
+    console.error('❌ FinanceResponse - Datos inválidos:', data);
+    return (
+      <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg text-white">
+        Error: Los datos financieros recibidos no son válidos o están incompletos.
+      </div>
+    );
+  }
   
   return (
     <motion.div
@@ -137,22 +156,53 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
               </TabsContent>
               
               <TabsContent value="comparison" className="m-0 p-4">
-                <ComparisonTable comparisons={data.comparaciones} />
+                {data.comparaciones && data.comparaciones.length > 0 ? (
+                  <ComparisonTable comparisons={data.comparaciones} />
+                ) : (
+                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                    No hay datos comparativos disponibles
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="market" className="m-0 p-4">
-                <MarketAnalysis data={data.analisis_mercado} />
+                {data.analisis_mercado ? (
+                  <MarketAnalysis data={data.analisis_mercado} />
+                ) : (
+                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                    No hay análisis de mercado disponible
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="recommendations" className="m-0 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <RecommendationsList recommendations={data.recomendaciones} />
-                  <TipsList tips={data.consejos_practicos} />
+                  {data.recomendaciones && Object.keys(data.recomendaciones).length > 0 ? (
+                    <RecommendationsList recommendations={data.recomendaciones} />
+                  ) : (
+                    <div className="p-4 bg-gray-800/30 rounded-lg">
+                      No hay recomendaciones disponibles
+                    </div>
+                  )}
+                  
+                  {data.consejos_practicos && data.consejos_practicos.length > 0 ? (
+                    <TipsList tips={data.consejos_practicos} />
+                  ) : (
+                    <div className="p-4 bg-gray-800/30 rounded-lg">
+                      No hay consejos prácticos disponibles
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
               <TabsContent value="faq" className="m-0 p-4">
-                <FAQAccordion faqs={data.preguntas_frecuentes} />
+                {data.preguntas_frecuentes && data.preguntas_frecuentes.length > 0 ? (
+                  <FAQAccordion faqs={data.preguntas_frecuentes} />
+                ) : (
+                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                    No hay preguntas frecuentes disponibles
+                  </div>
+                )}
               </TabsContent>
             </ScrollArea>
           </Tabs>

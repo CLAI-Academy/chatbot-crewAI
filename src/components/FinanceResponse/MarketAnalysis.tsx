@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { MarketData } from './FinanceResponse';
 
 interface MarketAnalysisProps {
@@ -10,147 +9,104 @@ interface MarketAnalysisProps {
 }
 
 export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
-  // Mock data for visual charts
-  const marketTrendData = [
-    { name: 'Ene', salud: 4000, tech: 2400, crypto: 1800 },
-    { name: 'Feb', salud: 3000, tech: 2800, crypto: 3000 },
-    { name: 'Mar', salud: 2000, tech: 3200, crypto: 1500 },
-    { name: 'Abr', salud: 2780, tech: 3908, crypto: 2500 },
-    { name: 'May', salud: 1890, tech: 4800, crypto: 3500 },
-    { name: 'Jun', salud: 2390, tech: 3800, crypto: 2200 },
+  console.log("🔍 MarketAnalysis - Datos:", data);
+
+  // Chart data for sentiment analysis
+  const sentimentData = [
+    { name: 'Optimismo', value: 60 },
+    { name: 'Precaución', value: 40 }
   ];
-  
-  const riskData = [
-    { name: 'Bajo', value: 30 },
-    { name: 'Medio', value: 40 },
-    { name: 'Alto', value: 30 },
-  ];
-  
-  // Get the appropriate field for risks/challenges - handle both "riesgos" and "retos"
-  const risksContent = data.riesgos || data.retos || "";
-  
+
+  const COLORS = ['#4338CA', '#6D28D9'];
+
+  // Determine whether to use "riesgos" or "retos" based on what's available
+  const challengesField = data.riesgos ? 'riesgos' : 'retos';
+  const challenges = data[challengesField as keyof MarketData] as string;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6"
+      className="grid grid-cols-1 lg:grid-cols-3 gap-6"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Tendencias */}
-        <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
-          <CardHeader className="bg-blue-900/20 border-b border-gray-700/30">
-            <CardTitle className="text-lg">Tendencias del Mercado</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <p className="text-sm text-gray-300 mb-4">{data.tendencias}</p>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={marketTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" tick={{ fill: '#9CA3AF' }} />
-                    <YAxis tick={{ fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                    />
-                    <Line type="monotone" dataKey="salud" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="tech" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="crypto" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex justify-center mt-2 space-x-6 text-xs">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-[#10B981] mr-1"></div>
-                  <span>Salud</span>
+      <div className="lg:col-span-2 space-y-6">
+        {/* Tendencias del Mercado */}
+        <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
+          <div className="p-4 bg-indigo-900/20 border-b border-gray-700/30">
+            <h3 className="text-lg font-semibold">Tendencias del Mercado</h3>
+          </div>
+          <div className="p-5">
+            <p className="text-gray-300">{data.tendencias}</p>
+          </div>
+        </div>
+
+        {/* Oportunidades de Inversión */}
+        <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
+          <div className="p-4 bg-blue-900/20 border-b border-gray-700/30">
+            <h3 className="text-lg font-semibold">Oportunidades de Inversión</h3>
+          </div>
+          <div className="p-5">
+            <p className="text-gray-300">{data.oportunidades}</p>
+          </div>
+        </div>
+
+        {/* Riesgos y Desafíos */}
+        {challenges && (
+          <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
+            <div className="p-4 bg-red-900/20 border-b border-gray-700/30">
+              <h3 className="text-lg font-semibold">{challengesField === 'riesgos' ? 'Riesgos' : 'Retos'}</h3>
+            </div>
+            <div className="p-5">
+              <p className="text-gray-300">{challenges}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Chart Column */}
+      <div className="flex flex-col space-y-6">
+        <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 h-full">
+          <div className="p-4 bg-violet-900/20 border-b border-gray-700/30">
+            <h3 className="text-lg font-semibold">Sentimiento del Mercado</h3>
+          </div>
+          <div className="p-5 flex flex-col items-center">
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sentimentData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {sentimentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 flex justify-center space-x-8">
+              {sentimentData.map((entry, index) => (
+                <div key={index} className="flex items-center">
+                  <div 
+                    className="w-3 h-3 rounded-full mr-2" 
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  ></div>
+                  <span className="text-sm">{entry.name}</span>
                 </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-[#3B82F6] mr-1"></div>
-                  <span>Tecnología</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-[#8B5CF6] mr-1"></div>
-                  <span>Cripto</span>
-                </div>
-              </div>
-            </motion.div>
-          </CardContent>
-        </Card>
-        
-        {/* Oportunidades */}
-        <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
-          <CardHeader className="bg-green-900/20 border-b border-gray-700/30">
-            <CardTitle className="text-lg">Oportunidades</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <p className="text-sm text-gray-300 mb-4">{data.oportunidades}</p>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={marketTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" tick={{ fill: '#9CA3AF' }} />
-                    <YAxis tick={{ fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                    />
-                    <Area type="monotone" dataKey="tech" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="salud" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="crypto" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          </CardContent>
-        </Card>
-        
-        {/* Riesgos/Retos */}
-        <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
-          <CardHeader className="bg-red-900/20 border-b border-gray-700/30">
-            <CardTitle className="text-lg">Retos y Riesgos</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <p className="text-sm text-gray-300 mb-4">{risksContent}</p>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={riskData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" tick={{ fill: '#9CA3AF' }} />
-                    <YAxis tick={{ fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                      formatter={(value) => [`${value}%`, 'Nivel de Riesgo']}
-                    />
-                    <Bar 
-                      dataKey="value" 
-                      fill="#3B82F6" 
-                      radius={[4, 4, 0, 0]}
-                      barSize={60}
-                    >
-                      <Cell fill="#10B981" />
-                      <Cell fill="#F59E0B" />
-                      <Cell fill="#EF4444" />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-center text-gray-400">
+              Basado en el análisis de tendencias actuales, noticias y datos del mercado.
+            </p>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

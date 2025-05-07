@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -88,25 +89,43 @@ const ChatInterface: React.FC = () => {
             // Check if the result is a JSON structure for finance response
             if (data.mode === 'finanzas') {
               try {
+                console.log('⚙️ Procesando datos financieros, modo detectado:', data.mode);
+                
                 // The resultado can be an already parsed object or a string that needs parsing
                 let financeResult;
                 
                 if (typeof data.resultado === 'string') {
                   // Clean up the string in case there are escaped newlines
+                  console.log('🔄 Parseando JSON desde string...');
                   const cleanedJson = data.resultado.replace(/\\n/g, '');
-                  financeResult = JSON.parse(cleanedJson);
+                  try {
+                    financeResult = JSON.parse(cleanedJson);
+                    console.log('✅ JSON parseado correctamente');
+                  } catch (parseError) {
+                    console.error('❌ Error al parsear JSON:', parseError);
+                    console.log('📝 Contenido del string que falló al parsear:', cleanedJson.substring(0, 200) + '...');
+                    financeResult = null;
+                  }
                 } else {
+                  console.log('✅ Datos ya en formato objeto, no necesita parsing');
                   financeResult = data.resultado;
                 }
                 
-                console.log('📊 Datos financieros detectados:', financeResult);
+                console.log('📊 Objeto de datos financieros:', financeResult);
                 
-                // Check for required fields to confirm it's valid finance data
-                if (financeResult.escenarios && 
-                    (financeResult.analisis_mercado || 
-                     financeResult.comparaciones || 
-                     financeResult.recomendaciones)) {
-                  console.log('✅ Datos financieros válidos, mostrando componentes especiales');
+                // Validate the structure of the data
+                if (financeResult && 
+                    Array.isArray(financeResult.escenarios) && 
+                    financeResult.escenarios.length > 0) {
+                  
+                  console.log('✅ Estructura de datos financieros validada:');
+                  console.log('📋 Escenarios:', financeResult.escenarios.length);
+                  console.log('📈 Comparaciones:', financeResult.comparaciones ? financeResult.comparaciones.length : 0);
+                  console.log('📊 Análisis de mercado:', financeResult.analisis_mercado ? 'Presente' : 'Ausente');
+                  console.log('📝 Recomendaciones:', financeResult.recomendaciones ? 'Presente' : 'Ausente');
+                  console.log('❓ FAQs:', financeResult.preguntas_frecuentes ? financeResult.preguntas_frecuentes.length : 0);
+                  console.log('💡 Consejos:', financeResult.consejos_practicos ? financeResult.consejos_practicos.length : 0);
+                  
                   setFinanceData(financeResult);
                   
                   // Add a simple text message for the chat history
@@ -120,9 +139,12 @@ const ChatInterface: React.FC = () => {
                   setMessages(prev => [...prev, aiMessage]);
                   setIsLoading(false);
                   return;
+                } else {
+                  console.error('❌ Estructura de datos financieros inválida');
+                  console.log('🔍 Datos recibidos:', financeResult);
                 }
               } catch (e) {
-                console.error('❌ Error al parsear JSON de finanzas:', e);
+                console.error('❌ Error al procesar datos financieros:', e);
                 // If parsing fails, fallback to showing as regular message
               }
             }
@@ -424,7 +446,14 @@ const ChatInterface: React.FC = () => {
               ))}
               
               {/* Display finance response when available */}
-              {financeData && <FinanceResponse data={financeData} />}
+              {financeData && (
+                <div className="my-4">
+                  <div className="text-blue-300 text-sm mb-2">
+                    DEBUG - FinanceData disponible: {JSON.stringify(Object.keys(financeData))}
+                  </div>
+                  <FinanceResponse data={financeData} />
+                </div>
+              )}
               
               <div ref={messagesEndRef} />
               
