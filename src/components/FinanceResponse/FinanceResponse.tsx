@@ -114,6 +114,21 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
       </div>
     );
   }
+
+  // Log comparison data outside of JSX rendering
+  console.log('🔍 Rendering comparison tab with data:', data.comparaciones);
+  
+  // Log market analysis data outside of JSX rendering
+  console.log('🔍 Rendering market tab with data:', data.analisis_mercado);
+  
+  // Log recommendations data outside of JSX rendering
+  console.log('🔍 Rendering recommendations tab with data:', data.recomendaciones);
+  
+  // Log tips data outside of JSX rendering
+  console.log('🔍 Rendering tips with data:', data.consejos_practicos);
+  
+  // Log FAQ data outside of JSX rendering
+  console.log('🔍 Rendering FAQ tab with data:', data.preguntas_frecuentes);
   
   return (
     <motion.div
@@ -166,8 +181,6 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
               </TabsContent>
               
               <TabsContent value="comparison" className="m-0 p-4">
-                {/* Add console log for debugging comparison data */}
-                {console.log('🔍 Rendering comparison tab with data:', data.comparaciones)}
                 {data.comparaciones && data.comparaciones.length > 0 ? (
                   <ComparisonTable comparisons={data.comparaciones} />
                 ) : (
@@ -178,8 +191,6 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
               </TabsContent>
               
               <TabsContent value="market" className="m-0 p-4">
-                {/* Add console log for debugging market analysis data */}
-                {console.log('🔍 Rendering market tab with data:', data.analisis_mercado)}
                 {data.analisis_mercado ? (
                   <MarketAnalysis data={data.analisis_mercado} />
                 ) : (
@@ -191,8 +202,6 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
               
               <TabsContent value="recommendations" className="m-0 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Add console log for debugging recommendations data */}
-                  {console.log('🔍 Rendering recommendations tab with data:', data.recomendaciones)}
                   {data.recomendaciones && Object.keys(data.recomendaciones).length > 0 ? (
                     <RecommendationsList recommendations={data.recomendaciones} />
                   ) : (
@@ -201,8 +210,6 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                     </div>
                   )}
                   
-                  {/* Add console log for debugging tips data */}
-                  {console.log('🔍 Rendering tips with data:', data.consejos_practicos)}
                   {data.consejos_practicos && data.consejos_practicos.length > 0 ? (
                     <TipsList tips={data.consejos_practicos} />
                   ) : (
@@ -214,8 +221,6 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
               </TabsContent>
               
               <TabsContent value="faq" className="m-0 p-4">
-                {/* Add console log for debugging FAQ data */}
-                {console.log('🔍 Rendering FAQ tab with data:', data.preguntas_frecuentes)}
                 {data.preguntas_frecuentes && data.preguntas_frecuentes.length > 0 ? (
                   <FAQAccordion faqs={data.preguntas_frecuentes} />
                 ) : (
