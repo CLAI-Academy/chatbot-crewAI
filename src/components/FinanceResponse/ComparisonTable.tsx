@@ -1,8 +1,11 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Comparison } from './FinanceResponse';
+import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 interface ComparisonTableProps {
   comparisons: Comparison[];
