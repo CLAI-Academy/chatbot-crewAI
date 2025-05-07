@@ -90,8 +90,10 @@ const ChatInterface: React.FC = () => {
               try {
                 // Try to parse the result as JSON for finance mode
                 const jsonResult = JSON.parse(data.resultado);
-                if (jsonResult.escenarios && jsonResult.comparaciones) {
-                  console.log('📊 Detectado resultado de finanzas estructurado:', jsonResult);
+                console.log('📊 Detectado resultado de finanzas estructurado:', jsonResult);
+                
+                // Check if this is a valid finance data structure with required fields
+                if (jsonResult.escenarios && jsonResult.analisis_mercado) {
                   setFinanceData(jsonResult);
                   
                   // Add a simple text message for the chat history
@@ -107,7 +109,7 @@ const ChatInterface: React.FC = () => {
                   return;
                 }
               } catch (e) {
-                console.log('No es un JSON válido para finanzas, mostrando como texto normal');
+                console.log('No es un JSON válido para finanzas, mostrando como texto normal', e);
               }
             }
             

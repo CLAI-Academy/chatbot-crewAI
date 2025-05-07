@@ -9,11 +9,16 @@ interface RecommendationsListProps {
 }
 
 export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recommendations }) => {
-  const recommendationItems = [
-    {
-      title: 'Diversificación',
-      content: recommendations.diversificacion,
-      icon: (
+  // Transform recommendations object into an array of items
+  const recommendationItems = Object.entries(recommendations).map(([key, value]) => {
+    let title = key.replace(/_/g, ' ');
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+    
+    let icon;
+    
+    if (key.includes('diversif')) {
+      icon = (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
           <path d="M2 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
           <path d="M16 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
@@ -26,12 +31,9 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
           <path d="M3.75 16.5l3.5-2.5"/>
           <path d="M10.8 19h2.4"/>
         </svg>
-      )
-    },
-    {
-      title: 'Monitoreo',
-      content: recommendations.monitoreo,
-      icon: (
+      );
+    } else if (key.includes('monitor') || key.includes('seguim')) {
+      icon = (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
           <path d="M12 2v4"/>
           <path d="M12 18v4"/>
@@ -42,19 +44,36 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
           <path d="M4.93 19.07l2.83-2.83"/>
           <path d="M16.24 7.76l2.83-2.83"/>
         </svg>
-      )
-    },
-    {
-      title: 'Educación',
-      content: recommendations.educacion,
-      icon: (
+      );
+    } else if (key.includes('educa')) {
+      icon = (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
         </svg>
-      )
+      );
+    } else {
+      icon = (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+          <path d="M12 8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2v0a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2z"/>
+          <path d="M12 2v2"/>
+          <path d="M12 22v-2"/>
+          <path d="M4 12H2"/>
+          <path d="M22 12h-2"/>
+          <path d="M17 7-2 2"/>
+          <path d="M7 7l2 2"/>
+          <path d="M17 17l-2-2"/>
+          <path d="M7 17l2-2"/>
+        </svg>
+      );
     }
-  ];
+    
+    return {
+      title,
+      content: value,
+      icon
+    };
+  });
 
   return (
     <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30 h-full">

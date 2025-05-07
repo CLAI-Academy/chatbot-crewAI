@@ -46,13 +46,12 @@ export interface Comparison {
 export interface MarketData {
   tendencias: string;
   oportunidades: string;
-  riesgos: string;
+  riesgos?: string;
+  retos?: string;
 }
 
 export interface Recommendations {
-  diversificacion: string;
-  monitoreo: string;
-  educacion: string;
+  [key: string]: string;
 }
 
 export interface FAQ {

@@ -110,10 +110,10 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
           </CardContent>
         </Card>
         
-        {/* Riesgos */}
+        {/* Riesgos/Retos */}
         <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
           <CardHeader className="bg-red-900/20 border-b border-gray-700/30">
-            <CardTitle className="text-lg">Riesgos</CardTitle>
+            <CardTitle className="text-lg">Retos y Riesgos</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <motion.div
@@ -121,7 +121,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <p className="text-sm text-gray-300 mb-4">{data.riesgos}</p>
+              <p className="text-sm text-gray-300 mb-4">{data.retos || data.riesgos}</p>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={riskData}>
