@@ -26,6 +26,9 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
     { name: 'Alto', value: 30 },
   ];
   
+  // Get the appropriate field for risks/challenges - handle both "riesgos" and "retos"
+  const risksContent = data.riesgos || data.retos || "";
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -121,7 +124,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <p className="text-sm text-gray-300 mb-4">{data.retos || data.riesgos}</p>
+              <p className="text-sm text-gray-300 mb-4">{risksContent}</p>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={riskData}>

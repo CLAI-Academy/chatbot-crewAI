@@ -86,15 +86,28 @@ const ChatInterface: React.FC = () => {
           
           if (data.status === 'completed' && data.resultado) {
             // Check if the result is a JSON structure for finance response
-            if (data.mode === 'finanzas' && typeof data.resultado === 'string') {
+            if (data.mode === 'finanzas') {
               try {
-                // Try to parse the result as JSON for finance mode
-                const jsonResult = JSON.parse(data.resultado);
-                console.log('📊 Detectado resultado de finanzas estructurado:', jsonResult);
+                // The resultado can be an already parsed object or a string that needs parsing
+                let financeResult;
                 
-                // Check if this is a valid finance data structure with required fields
-                if (jsonResult.escenarios && jsonResult.analisis_mercado) {
-                  setFinanceData(jsonResult);
+                if (typeof data.resultado === 'string') {
+                  // Clean up the string in case there are escaped newlines
+                  const cleanedJson = data.resultado.replace(/\\n/g, '');
+                  financeResult = JSON.parse(cleanedJson);
+                } else {
+                  financeResult = data.resultado;
+                }
+                
+                console.log('📊 Datos financieros detectados:', financeResult);
+                
+                // Check for required fields to confirm it's valid finance data
+                if (financeResult.escenarios && 
+                    (financeResult.analisis_mercado || 
+                     financeResult.comparaciones || 
+                     financeResult.recomendaciones)) {
+                  console.log('✅ Datos financieros válidos, mostrando componentes especiales');
+                  setFinanceData(financeResult);
                   
                   // Add a simple text message for the chat history
                   const aiMessage: MessageType = {
@@ -109,7 +122,8 @@ const ChatInterface: React.FC = () => {
                   return;
                 }
               } catch (e) {
-                console.log('No es un JSON válido para finanzas, mostrando como texto normal', e);
+                console.error('❌ Error al parsear JSON de finanzas:', e);
+                // If parsing fails, fallback to showing as regular message
               }
             }
             
