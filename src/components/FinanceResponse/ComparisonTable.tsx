@@ -12,6 +12,18 @@ interface ComparisonTableProps {
 }
 
 export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons }) => {
+  console.log("🔍 ComparisonTable - recibidas comparaciones:", comparisons);
+  
+  // Safety check for empty or invalid data
+  if (!comparisons || comparisons.length === 0) {
+    console.warn("⚠️ No hay comparaciones para mostrar");
+    return (
+      <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30 p-4">
+        <p className="text-gray-400">No hay datos comparativos disponibles</p>
+      </Card>
+    );
+  }
+  
   const chartData = comparisons.map(comp => ({
     name: comp.nombre_escenario,
     ganancia: comp.ganancia_total,
@@ -21,16 +33,18 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
   }));
 
   const recommendedScenario = comparisons.find(comp => comp.recomendado);
+  console.log("🔍 Escenario recomendado:", recommendedScenario);
   
   // Get color based on risk level
   const getRiskColor = (risk: string) => {
-    switch (risk.toLowerCase()) {
-      case 'bajo': return '#10B981'; // green
-      case 'medio': return '#F59E0B'; // amber
-      case 'alto': return '#EF4444'; // red
-      default: return '#3B82F6'; // blue
-    }
+    const riskLower = risk.toLowerCase();
+    if (riskLower.includes('bajo')) return '#10B981'; // green
+    if (riskLower.includes('medio')) return '#F59E0B'; // amber
+    if (riskLower.includes('alto')) return '#EF4444'; // red
+    return '#3B82F6'; // blue (default)
   };
+
+  console.log("🎨 Datos para gráfico:", chartData);
 
   return (
     <motion.div
@@ -131,9 +145,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                 <TableCell>
                   <Badge 
                     className={`bg-opacity-20 border ${
-                      comparison.nivel_riesgo.toLowerCase() === 'bajo' 
+                      comparison.nivel_riesgo.toLowerCase().includes('bajo')
                         ? 'bg-green-500/20 border-green-500/30 text-green-400' 
-                        : comparison.nivel_riesgo.toLowerCase() === 'medio' 
+                        : comparison.nivel_riesgo.toLowerCase().includes('medio')
                           ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' 
                           : 'bg-red-500/20 border-red-500/30 text-red-400'
                     }`}

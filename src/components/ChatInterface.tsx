@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -87,9 +86,9 @@ const ChatInterface: React.FC = () => {
           
           if (data.status === 'completed' && data.resultado) {
             // Check if the result is a JSON structure for finance response
-            if (data.mode === 'finanzas') {
+            if (agentFlowInfo?.mode === 'finanzas') {
               try {
-                console.log('⚙️ Procesando datos financieros, modo detectado:', data.mode);
+                console.log('⚙️ Procesando datos financieros, modo detectado:', agentFlowInfo.mode);
                 
                 // The resultado can be an already parsed object or a string that needs parsing
                 let financeResult;
@@ -97,13 +96,24 @@ const ChatInterface: React.FC = () => {
                 if (typeof data.resultado === 'string') {
                   // Clean up the string in case there are escaped newlines
                   console.log('🔄 Parseando JSON desde string...');
-                  const cleanedJson = data.resultado.replace(/\\n/g, '');
+                  // Log the first 200 characters to debug
+                  console.log('📄 Primeros 200 caracteres:', data.resultado.substring(0, 200));
+                  
                   try {
-                    financeResult = JSON.parse(cleanedJson);
+                    financeResult = JSON.parse(data.resultado);
                     console.log('✅ JSON parseado correctamente');
+                    console.log('🔍 Estructura del objeto:', Object.keys(financeResult));
+                    
+                    if (financeResult.escenarios) {
+                      console.log('📊 Número de escenarios:', financeResult.escenarios.length);
+                    }
+                    
+                    if (financeResult.comparaciones) {
+                      console.log('📊 Número de comparaciones:', financeResult.comparaciones.length);
+                    }
                   } catch (parseError) {
                     console.error('❌ Error al parsear JSON:', parseError);
-                    console.log('📝 Contenido del string que falló al parsear:', cleanedJson.substring(0, 200) + '...');
+                    console.log('📝 Contenido del string que falló al parsear:', data.resultado.substring(0, 500) + '...');
                     financeResult = null;
                   }
                 } else {
@@ -140,25 +150,45 @@ const ChatInterface: React.FC = () => {
                   setIsLoading(false);
                   return;
                 } else {
-                  console.error('❌ Estructura de datos financieros inválida');
+                  console.error('❌ Estructura de datos financieros inválida o incompleta');
                   console.log('🔍 Datos recibidos:', financeResult);
+                  
+                  // Intentar recuperación - crear mensaje de texto con la información disponible
+                  const aiMessage: MessageType = {
+                    id: Date.now().toString(),
+                    content: "He analizado tu consulta financiera, pero tuve problemas procesando los datos. Por favor, intenta formular tu pregunta de otra manera.",
+                    sender: 'ai',
+                    timestamp: new Date()
+                  };
+                  
+                  setMessages(prev => [...prev, aiMessage]);
+                  setIsLoading(false);
                 }
               } catch (e) {
-                console.error('❌ Error al procesar datos financieros:', e);
+                console.error('❌ Error general al procesar datos financieros:', e);
                 // If parsing fails, fallback to showing as regular message
+                const aiMessage: MessageType = {
+                  id: Date.now().toString(),
+                  content: "Ocurrió un error al procesar los datos financieros. Por favor, intenta de nuevo.",
+                  sender: 'ai',
+                  timestamp: new Date()
+                };
+                
+                setMessages(prev => [...prev, aiMessage]);
+                setIsLoading(false);
               }
+            } else {
+              // Regular message handling if not finance data or parsing failed
+              const aiMessage: MessageType = {
+                id: Date.now().toString(),
+                content: data.resultado,
+                sender: 'ai',
+                timestamp: new Date()
+              };
+              
+              setMessages(prev => [...prev, aiMessage]);
+              setIsLoading(false);
             }
-            
-            // Regular message handling if not finance data or parsing failed
-            const aiMessage: MessageType = {
-              id: Date.now().toString(),
-              content: data.resultado,
-              sender: 'ai',
-              timestamp: new Date()
-            };
-            
-            setMessages(prev => [...prev, aiMessage]);
-            setIsLoading(false);
             
             // Limpiar estado de agente cuando se completa
             setTimeout(() => {
@@ -448,8 +478,16 @@ const ChatInterface: React.FC = () => {
               {/* Display finance response when available */}
               {financeData && (
                 <div className="my-4">
-                  <div className="text-blue-300 text-sm mb-2">
-                    DEBUG - FinanceData disponible: {JSON.stringify(Object.keys(financeData))}
+                  {/* Debug info - remove in production */}
+                  <div className="text-blue-300 text-xs mb-2 p-2 bg-gray-800/30 rounded-md">
+                    <p>DEBUG - Datos financieros disponibles:</p>
+                    <p>Escenarios: {financeData.escenarios?.length || 0}</p>
+                    <p>Comparaciones: {financeData.comparaciones?.length || 0}</p>
+                    <p>Análisis Mercado: {financeData.analisis_mercado ? 'Sí' : 'No'}</p>
+                    <p>Recomendaciones: {Object.keys(financeData.recomendaciones || {}).length}</p>
+                    <pre className="text-xs mt-2 overflow-auto max-h-20">
+                      {JSON.stringify(financeData.escenarios?.[0] || {}, null, 2).substring(0, 200)}...
+                    </pre>
                   </div>
                   <FinanceResponse data={financeData} />
                 </div>
