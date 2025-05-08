@@ -2,10 +2,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { Comparison } from './FinanceResponse';
 import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+
+// Importación dinámica de Recharts para evitar problemas de SSR
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+
+interface Comparison {
+  nombre_escenario: string;
+  nivel_riesgo: string;
+  ganancia_total: number;
+  ingreso_mensual: number;
+  recomendado: boolean;
+  razon_recomendacion: string;
+}
 
 interface ComparisonTableProps {
   comparisons: Comparison[];
@@ -28,15 +38,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
     name: comp.nombre_escenario,
     ganancia: comp.ganancia_total,
     ingreso: comp.ingreso_mensual,
-    riesgo: comp.nivel_riesgo.toLowerCase() === 'bajo' ? 1 : 
-            comp.nivel_riesgo.toLowerCase() === 'medio' ? 2 : 3
+    riesgo: (comp.nivel_riesgo?.toLowerCase() ?? '') === 'bajo' ? 1 : 
+            (comp.nivel_riesgo?.toLowerCase() ?? '') === 'medio' ? 2 : 3
   }));
 
   const recommendedScenario = comparisons.find(comp => comp.recomendado);
   console.log("🔍 Escenario recomendado:", recommendedScenario);
   
   // Get color based on risk level
-  const getRiskColor = (risk: string) => {
+  const getRiskColor = (risk = '') => {
     const riskLower = risk.toLowerCase();
     if (riskLower.includes('bajo')) return '#10B981'; // green
     if (riskLower.includes('medio')) return '#F59E0B'; // amber
@@ -80,7 +90,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                 <YAxis />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                  formatter={(value) => [`$${value}`, 'Ganancia']}
+                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value as number)}`, 'Ganancia']}
                 />
                 <Bar 
                   dataKey="ganancia" 
@@ -89,7 +99,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                   radius={[4, 4, 0, 0]}
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getRiskColor(comparisons[index].nivel_riesgo)} />
+                    <Cell key={`cell-ganancia-${index}`} fill={getRiskColor(comparisons[index]?.nivel_riesgo || '')} />
                   ))}
                 </Bar>
               </BarChart>
@@ -108,7 +118,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                 <YAxis />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                  formatter={(value) => [`$${value}`, 'Ingreso Mensual']}
+                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value as number)}`, 'Ingreso Mensual']}
                 />
                 <Bar 
                   dataKey="ingreso" 
@@ -117,7 +127,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                   radius={[4, 4, 0, 0]}
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getRiskColor(comparisons[index].nivel_riesgo)} />
+                    <Cell key={`cell-ingreso-${index}`} fill={getRiskColor(comparisons[index]?.nivel_riesgo || '')} />
                   ))}
                 </Bar>
               </BarChart>
@@ -139,15 +149,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
             </TableRow>
           </TableHeader>
           <TableBody>
-            {comparisons.map((comparison, index) => (
-              <TableRow key={index} className={comparison.recomendado ? 'bg-blue-900/10' : ''}>
+            {comparisons.map((comparison) => (
+              <TableRow key={comparison.nombre_escenario} className={comparison.recomendado ? 'bg-blue-900/10' : ''}>
                 <TableCell className="font-medium">{comparison.nombre_escenario}</TableCell>
                 <TableCell>
                   <Badge 
                     className={`bg-opacity-20 border ${
-                      comparison.nivel_riesgo.toLowerCase().includes('bajo')
+                      (comparison.nivel_riesgo?.toLowerCase() ?? '').includes('bajo')
                         ? 'bg-green-500/20 border-green-500/30 text-green-400' 
-                        : comparison.nivel_riesgo.toLowerCase().includes('medio')
+                        : (comparison.nivel_riesgo?.toLowerCase() ?? '').includes('medio')
                           ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' 
                           : 'bg-red-500/20 border-red-500/30 text-red-400'
                     }`}
@@ -155,8 +165,12 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                     {comparison.nivel_riesgo}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">${comparison.ganancia_total}</TableCell>
-                <TableCell className="text-right">${comparison.ingreso_mensual}</TableCell>
+                <TableCell className="text-right">
+                  {Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(comparison.ganancia_total)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(comparison.ingreso_mensual)}
+                </TableCell>
                 <TableCell className="text-center">
                   {comparison.recomendado ? (
                     <motion.div 

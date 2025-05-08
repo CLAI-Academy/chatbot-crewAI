@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/hooks/useAuth';
+import { FinanceData } from '@/types/finance';
 
 // Interface for agent flow information
 interface AgentFlowInfo {
@@ -29,14 +30,20 @@ const ChatInterface: React.FC = () => {
   const [hasInitiatedChat, setHasInitiatedChat] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const [financeData, setFinanceData] = useState<any>(null);
+  const [financeData, setFinanceData] = useState<FinanceData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const modeRef = useRef<string | null>(null);
   const { user } = useAuth();
 
   // URL for WebSocket
   const wsUrl = "ws://127.0.0.1:8000/ws";
   console.log("🔌 WebSocket URL configurada:", wsUrl);
 
+  // Actualizar la referencia del modo cuando cambia agentFlowInfo
+  useEffect(() => {
+    modeRef.current = agentFlowInfo?.mode ?? null;
+  }, [agentFlowInfo?.mode]);
+  
   // Función para conectar WebSocket
   const connectWebSocket = () => {
     console.log('🚀 Iniciando conexión WebSocket directa...');
@@ -85,58 +92,70 @@ const ChatInterface: React.FC = () => {
           }
           
           if (data.status === 'completed' && data.resultado) {
+            // Usar el modo que viene en el propio mensaje, no el estado
+            const messageMode = data.mode || modeRef.current;
+            
             // Check if the result is a JSON structure for finance response
-            if (agentFlowInfo?.mode === 'finanzas') {
+            if (messageMode === 'finanzas') {
               try {
-                console.log('⚙️ Procesando datos financieros, modo detectado:', agentFlowInfo.mode);
+                console.log('⚙️ Procesando datos financieros, modo detectado:', messageMode);
                 
-                // The resultado can be an already parsed object or a string that needs parsing
-                let financeResult;
+                // Parse resultado if it's a string, otherwise use as is
+                let financeResult = data.resultado;
                 
-                if (typeof data.resultado === 'string') {
-                  // Clean up the string in case there are escaped newlines
+                if (typeof financeResult === 'string') {
                   console.log('🔄 Parseando JSON desde string...');
                   // Log the first 200 characters to debug
-                  console.log('📄 Primeros 200 caracteres:', data.resultado.substring(0, 200));
+                  console.log('📄 Primeros 200 caracteres:', financeResult.substring(0, 200));
                   
                   try {
-                    financeResult = JSON.parse(data.resultado);
+                    financeResult = JSON.parse(financeResult);
                     console.log('✅ JSON parseado correctamente');
-                    console.log('🔍 Estructura del objeto:', Object.keys(financeResult));
-                    
-                    if (financeResult.escenarios) {
-                      console.log('📊 Número de escenarios:', financeResult.escenarios.length);
-                    }
-                    
-                    if (financeResult.comparaciones) {
-                      console.log('📊 Número de comparaciones:', financeResult.comparaciones.length);
-                    }
                   } catch (parseError) {
                     console.error('❌ Error al parsear JSON:', parseError);
-                    console.log('📝 Contenido del string que falló al parsear:', data.resultado.substring(0, 500) + '...');
-                    financeResult = null;
+                    console.log('📝 Contenido del string que falló al parsear:', financeResult.substring(0, 500) + '...');
+                    
+                    // Intentar recuperar partes del JSON si es posible
+                    const jsonMatch = /\{[\s\S]*\}/.exec(financeResult);
+                    if (jsonMatch) {
+                      try {
+                        financeResult = JSON.parse(jsonMatch[0]);
+                        console.log('✅ JSON recuperado de fragmento');
+                      } catch (e) {
+                        console.error('❌ Tampoco se pudo recuperar el JSON del fragmento');
+                        financeResult = null;
+                      }
+                    } else {
+                      financeResult = null;
+                    }
                   }
                 } else {
                   console.log('✅ Datos ya en formato objeto, no necesita parsing');
-                  financeResult = data.resultado;
                 }
                 
                 console.log('📊 Objeto de datos financieros:', financeResult);
                 
-                // Validate the structure of the data
-                if (financeResult && 
-                    Array.isArray(financeResult.escenarios) && 
-                    financeResult.escenarios.length > 0) {
+                // Crear objeto seguro con validación de cada propiedad
+                if (financeResult) {
+                  const safeFinanceResult: FinanceData = {
+                    escenarios: Array.isArray(financeResult.escenarios) ? financeResult.escenarios : [],
+                    comparaciones: Array.isArray(financeResult.comparaciones) ? financeResult.comparaciones : [],
+                    analisis_mercado: financeResult.analisis_mercado || {},
+                    recomendaciones: typeof financeResult.recomendaciones === 'object' ? financeResult.recomendaciones : {},
+                    preguntas_frecuentes: Array.isArray(financeResult.preguntas_frecuentes) ? financeResult.preguntas_frecuentes : [],
+                    consejos_practicos: Array.isArray(financeResult.consejos_practicos) ? financeResult.consejos_practicos : []
+                  };
                   
-                  console.log('✅ Estructura de datos financieros validada:');
-                  console.log('📋 Escenarios:', financeResult.escenarios.length);
-                  console.log('📈 Comparaciones:', financeResult.comparaciones ? financeResult.comparaciones.length : 0);
-                  console.log('📊 Análisis de mercado:', financeResult.analisis_mercado ? 'Presente' : 'Ausente');
-                  console.log('📝 Recomendaciones:', financeResult.recomendaciones ? 'Presente' : 'Ausente');
-                  console.log('❓ FAQs:', financeResult.preguntas_frecuentes ? financeResult.preguntas_frecuentes.length : 0);
-                  console.log('💡 Consejos:', financeResult.consejos_practicos ? financeResult.consejos_practicos.length : 0);
+                  console.log('🔒 Datos financieros validados:', safeFinanceResult);
+                  console.log('📋 Escenarios:', safeFinanceResult.escenarios.length);
+                  console.log('📈 Comparaciones:', safeFinanceResult.comparaciones.length);
+                  console.log('📊 Análisis de mercado:', Object.keys(safeFinanceResult.analisis_mercado).length ? 'Presente' : 'Ausente');
+                  console.log('📝 Recomendaciones:', Object.keys(safeFinanceResult.recomendaciones).length);
+                  console.log('❓ FAQs:', safeFinanceResult.preguntas_frecuentes.length);
+                  console.log('💡 Consejos:', safeFinanceResult.consejos_practicos.length);
                   
-                  setFinanceData(financeResult);
+                  // Establecer los datos financieros sin importar si escenarios está vacío o no
+                  setFinanceData(safeFinanceResult);
                   
                   // Add a simple text message for the chat history
                   const aiMessage: MessageType = {
@@ -150,10 +169,8 @@ const ChatInterface: React.FC = () => {
                   setIsLoading(false);
                   return;
                 } else {
-                  console.error('❌ Estructura de datos financieros inválida o incompleta');
-                  console.log('🔍 Datos recibidos:', financeResult);
+                  console.error('❌ No se pudo procesar el objeto de datos financieros');
                   
-                  // Intentar recuperación - crear mensaje de texto con la información disponible
                   const aiMessage: MessageType = {
                     id: Date.now().toString(),
                     content: "He analizado tu consulta financiera, pero tuve problemas procesando los datos. Por favor, intenta formular tu pregunta de otra manera.",
@@ -189,11 +206,6 @@ const ChatInterface: React.FC = () => {
               setMessages(prev => [...prev, aiMessage]);
               setIsLoading(false);
             }
-            
-            // Limpiar estado de agente cuando se completa
-            setTimeout(() => {
-              setAgentFlowInfo(null);
-            }, 2000);
           }
           
           if (data.error) {
@@ -204,7 +216,6 @@ const ChatInterface: React.FC = () => {
               variant: "destructive"
             });
             setIsLoading(false);
-            setAgentFlowInfo(null);
           }
         } catch (e) {
           console.error('❌ Error procesando mensaje WebSocket:', e);
@@ -240,6 +251,18 @@ const ChatInterface: React.FC = () => {
       });
     }
   };
+  
+  // Limpia agentFlowInfo cuando los datos de finanzas se han cargado completamente
+  useEffect(() => {
+    if (financeData) {
+      // Solo limpiamos agentFlowInfo después de que los datos se han cargado completamente
+      const timer = setTimeout(() => {
+        setAgentFlowInfo(null);
+      }, 1000); // Pequeña pausa para evitar parpadeo
+      
+      return () => clearTimeout(timer);
+    }
+  }, [financeData]);
   
   // Función para enviar mensaje por WebSocket
   const sendWebSocketMessage = (content: string, image: string | null) => {
@@ -478,17 +501,6 @@ const ChatInterface: React.FC = () => {
               {/* Display finance response when available */}
               {financeData && (
                 <div className="my-4">
-                  {/* Debug info - remove in production */}
-                  <div className="text-blue-300 text-xs mb-2 p-2 bg-gray-800/30 rounded-md">
-                    <p>DEBUG - Datos financieros disponibles:</p>
-                    <p>Escenarios: {financeData.escenarios?.length || 0}</p>
-                    <p>Comparaciones: {financeData.comparaciones?.length || 0}</p>
-                    <p>Análisis Mercado: {financeData.analisis_mercado ? 'Sí' : 'No'}</p>
-                    <p>Recomendaciones: {Object.keys(financeData.recomendaciones || {}).length}</p>
-                    <pre className="text-xs mt-2 overflow-auto max-h-20">
-                      {JSON.stringify(financeData.escenarios?.[0] || {}, null, 2).substring(0, 200)}...
-                    </pre>
-                  </div>
                   <FinanceResponse data={financeData} />
                 </div>
               )}

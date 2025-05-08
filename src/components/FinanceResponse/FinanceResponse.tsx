@@ -10,62 +10,7 @@ import { MarketAnalysis } from './MarketAnalysis';
 import { RecommendationsList } from './RecommendationsList';
 import { FAQAccordion } from './FAQAccordion';
 import { TipsList } from './TipsList';
-
-export interface Investment {
-  tipo_inversion: string;
-  nombre: string;
-  porcentaje: number;
-  rentabilidad_esperada: number;
-  ingreso_mensual: number;
-  descripcion: string;
-  ventajas: string[];
-  desventajas: string[];
-}
-
-export interface Scenario {
-  nombre_escenario: string;
-  nivel_riesgo: string;
-  inversion_total: number;
-  inversiones: Investment[];
-  explicacion: string;
-  pasos_a_seguir: string[];
-  tiempo_recomendado: string;
-  objetivo: string;
-}
-
-export interface Comparison {
-  nombre_escenario: string;
-  nivel_riesgo: string;
-  ganancia_total: number;
-  ingreso_mensual: number;
-  recomendado: boolean;
-  razon_recomendacion: string;
-}
-
-export interface MarketData {
-  tendencias: string;
-  oportunidades: string;
-  riesgos?: string;
-  retos?: string;
-}
-
-export interface Recommendations {
-  [key: string]: string;
-}
-
-export interface FAQ {
-  pregunta: string;
-  respuesta: string;
-}
-
-export interface FinanceData {
-  escenarios: Scenario[];
-  comparaciones: Comparison[];
-  analisis_mercado: MarketData;
-  recomendaciones: Recommendations;
-  preguntas_frecuentes: FAQ[];
-  consejos_practicos: string[];
-}
+import { FinanceData } from '@/types/finance';
 
 interface FinanceResponseProps {
   data: FinanceData;
@@ -81,6 +26,11 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
     console.log('📊 Análisis de mercado:', data.analisis_mercado ? 'Presente' : 'Ausente');
     console.log('📈 Comparaciones:', data.comparaciones?.length || 0);
     console.log('📝 Recomendaciones:', Object.keys(data.recomendaciones || {}));
+    console.log('🔍 Rendering comparison tab with data:', data.comparaciones);
+    console.log('🔍 Rendering market tab with data:', data.analisis_mercado);
+    console.log('🔍 Rendering recommendations tab with data:', data.recomendaciones);
+    console.log('🔍 Rendering tips with data:', data.consejos_practicos);
+    console.log('🔍 Rendering FAQ tab with data:', data.preguntas_frecuentes);
   }, [data]);
   
   // Scroll into view when component mounts
@@ -105,30 +55,12 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
     );
   }
   
-  // Ensure we have escenarios for rendering
-  if (!data.escenarios || data.escenarios.length === 0) {
-    console.error('❌ FinanceResponse - No hay escenarios:', data);
-    return (
-      <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg text-white">
-        Error: No se encontraron escenarios financieros para mostrar.
-      </div>
-    );
+  // Ensure we have escenarios for rendering - Allow empty escenarios but show message
+  const hasEscenarios = data.escenarios && data.escenarios.length > 0;
+  
+  if (!hasEscenarios) {
+    console.warn('⚠️ FinanceResponse - No hay escenarios:', data);
   }
-
-  // Log comparison data outside of JSX rendering
-  console.log('🔍 Rendering comparison tab with data:', data.comparaciones);
-  
-  // Log market analysis data outside of JSX rendering
-  console.log('🔍 Rendering market tab with data:', data.analisis_mercado);
-  
-  // Log recommendations data outside of JSX rendering
-  console.log('🔍 Rendering recommendations tab with data:', data.recomendaciones);
-  
-  // Log tips data outside of JSX rendering
-  console.log('🔍 Rendering tips with data:', data.consejos_practicos);
-  
-  // Log FAQ data outside of JSX rendering
-  console.log('🔍 Rendering FAQ tab with data:', data.preguntas_frecuentes);
   
   return (
     <motion.div
@@ -173,11 +105,17 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
             
             <ScrollArea className="max-h-[600px] overflow-auto">
               <TabsContent value="scenarios" className="m-0 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {data.escenarios.map((scenario, index) => (
-                    <ScenarioCard key={index} scenario={scenario} />
-                  ))}
-                </div>
+                {hasEscenarios ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {data.escenarios!.map((scenario, index) => (
+                      <ScenarioCard key={index} scenario={scenario} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                    No hay escenarios disponibles
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="comparison" className="m-0 p-4">
