@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -475,7 +476,7 @@ const ChatInterface: React.FC = () => {
   };
   
   return (
-    <div className="flex flex-col h-screen rounded-none md:h-[80vh] md:rounded-xl bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border border-gray-700/30 relative">
+    <div className="flex flex-col h-screen w-screen rounded-none bg-gradient-to-b from-chat-darker to-[#1A1632] shadow-2xl overflow-hidden border-0">
       <ChatHeader />
       
       {showWelcome && inputCentered ? (
