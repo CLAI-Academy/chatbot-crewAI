@@ -17,16 +17,16 @@ const Index: React.FC = () => {
   // Show nothing while checking authentication
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-chat-darker">
+      <div className="flex items-center justify-center min-h-screen w-screen bg-chat-darker">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-chat-accent"></div>
       </div>
     );
   }
 
   // Only render the chat interface if the user is authenticated
-  // Removed the width constraints to make it fullscreen
+  // Full screen display
   return (
-    <div className="flex items-center justify-center min-h-screen bg-chat-darker">
+    <div className="flex items-center justify-center min-h-screen w-screen bg-chat-darker">
       {user && <ChatInterface />}
     </div>
   );

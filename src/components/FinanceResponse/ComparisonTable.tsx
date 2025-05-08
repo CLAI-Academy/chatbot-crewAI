@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
@@ -61,7 +62,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
           transition={{ type: "spring", stiffness: 100 }}
         >
           <h3 className="text-lg font-semibold mb-2 text-blue-300">Recomendación</h3>
-          <p className="text-sm mb-1">Recomendamos el <span className="font-semibold text-blue-300">{recommendedScenario.nombre_escenario}</span></p>
+          <p className="text-sm mb-1 text-gray-200">Recomendamos el <span className="font-semibold text-blue-300">{recommendedScenario.nombre_escenario}</span></p>
           <p className="text-sm text-gray-300">{recommendedScenario.razon_recomendacion}</p>
         </motion.div>
       )}
@@ -70,15 +71,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Ganancia total chart */}
         <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
-          <h3 className="text-sm font-semibold mb-4 text-center">Comparativa de Ganancia Total</h3>
+          <h3 className="text-sm font-semibold mb-4 text-center text-white">Comparativa de Ganancia Total</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{ fill: "#e5e5e5" }} />
+                <YAxis tick={{ fill: "#e5e5e5" }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem', color: '#e5e5e5' }} 
                   formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(value))}`, 'Ganancia']}
                 />
                 <Bar 
@@ -98,15 +99,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
         
         {/* Ingreso mensual chart */}
         <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
-          <h3 className="text-sm font-semibold mb-4 text-center">Comparativa de Ingreso Mensual</h3>
+          <h3 className="text-sm font-semibold mb-4 text-center text-white">Comparativa de Ingreso Mensual</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{ fill: "#e5e5e5" }} />
+                <YAxis tick={{ fill: "#e5e5e5" }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem', color: '#e5e5e5' }} 
                   formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(value))}`, 'Ingreso Mensual']}
                 />
                 <Bar 
@@ -140,7 +141,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
           <TableBody>
             {comparisons.map((comparison) => (
               <TableRow key={comparison.nombre_escenario} className={comparison.recomendado ? 'bg-blue-900/10' : ''}>
-                <TableCell className="font-medium">{comparison.nombre_escenario}</TableCell>
+                <TableCell className="font-medium text-white">{comparison.nombre_escenario}</TableCell>
                 <TableCell>
                   <Badge 
                     className={`bg-opacity-20 border ${
@@ -154,10 +155,10 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                     {comparison.nivel_riesgo}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right text-gray-200">
                   {Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(comparison.ganancia_total)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right text-gray-200">
                   {Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(comparison.ingreso_mensual)}
                 </TableCell>
                 <TableCell className="text-center">

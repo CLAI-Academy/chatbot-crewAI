@@ -11,7 +11,7 @@ export const TipsList: React.FC<TipsListProps> = ({ tips }) => {
   return (
     <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30 h-full">
       <CardHeader className="bg-green-900/20 border-b border-gray-700/30">
-        <CardTitle className="text-lg">Consejos Prácticos</CardTitle>
+        <CardTitle className="text-lg text-white">Consejos Prácticos</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         <ul className="space-y-3">
@@ -28,7 +28,7 @@ export const TipsList: React.FC<TipsListProps> = ({ tips }) => {
                   {index + 1}
                 </div>
               </div>
-              <p className="text-sm">{tip}</p>
+              <p className="text-sm text-gray-200">{tip}</p>
             </motion.li>
           ))}
         </ul>

@@ -17,7 +17,7 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({ faqs }) => {
     >
       <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden mb-6">
         <div className="p-4 bg-gray-800/60 border-b border-gray-700/30">
-          <h3 className="text-lg font-semibold">Preguntas Frecuentes</h3>
+          <h3 className="text-lg font-semibold text-white">Preguntas Frecuentes</h3>
         </div>
         
         <Accordion type="single" collapsible className="w-full">

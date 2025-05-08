@@ -98,11 +98,11 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
         <CardContent className="p-0">
           <Tabs defaultValue="scenarios" className="w-full">
             <TabsList className="w-full grid grid-cols-5 rounded-none border-b border-gray-700/30 bg-gray-800/50">
-              <TabsTrigger value="scenarios" className="data-[state=active]:bg-gray-700/50">Escenarios</TabsTrigger>
-              <TabsTrigger value="comparison" className="data-[state=active]:bg-gray-700/50">Comparativa</TabsTrigger>
-              <TabsTrigger value="market" className="data-[state=active]:bg-gray-700/50">Mercado</TabsTrigger>
-              <TabsTrigger value="recommendations" className="data-[state=active]:bg-gray-700/50">Recomendaciones</TabsTrigger>
-              <TabsTrigger value="faq" className="data-[state=active]:bg-gray-700/50">FAQ</TabsTrigger>
+              <TabsTrigger value="scenarios" className="data-[state=active]:bg-gray-700/50 text-white">Escenarios</TabsTrigger>
+              <TabsTrigger value="comparison" className="data-[state=active]:bg-gray-700/50 text-white">Comparativa</TabsTrigger>
+              <TabsTrigger value="market" className="data-[state=active]:bg-gray-700/50 text-white">Mercado</TabsTrigger>
+              <TabsTrigger value="recommendations" className="data-[state=active]:bg-gray-700/50 text-white">Recomendaciones</TabsTrigger>
+              <TabsTrigger value="faq" className="data-[state=active]:bg-gray-700/50 text-white">FAQ</TabsTrigger>
             </TabsList>
             
             <ScrollArea className="max-h-[600px] overflow-auto">
@@ -114,7 +114,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                  <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                     No hay escenarios disponibles
                   </div>
                 )}
@@ -124,7 +124,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                 {data.comparaciones && data.comparaciones.length > 0 ? (
                   <ComparisonTable comparisons={data.comparaciones} />
                 ) : (
-                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                  <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                     No hay datos comparativos disponibles
                   </div>
                 )}
@@ -134,7 +134,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                 {data.analisis_mercado ? (
                   <MarketAnalysis data={data.analisis_mercado} />
                 ) : (
-                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                  <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                     No hay análisis de mercado disponible
                   </div>
                 )}
@@ -145,7 +145,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                   {data.recomendaciones && Object.keys(data.recomendaciones).length > 0 ? (
                     <RecommendationsList recommendations={data.recomendaciones} />
                   ) : (
-                    <div className="p-4 bg-gray-800/30 rounded-lg">
+                    <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                       No hay recomendaciones disponibles
                     </div>
                   )}
@@ -153,7 +153,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                   {data.consejos_practicos && data.consejos_practicos.length > 0 ? (
                     <TipsList tips={data.consejos_practicos} />
                   ) : (
-                    <div className="p-4 bg-gray-800/30 rounded-lg">
+                    <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                       No hay consejos prácticos disponibles
                     </div>
                   )}
@@ -164,7 +164,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
                 {data.preguntas_frecuentes && data.preguntas_frecuentes.length > 0 ? (
                   <FAQAccordion faqs={data.preguntas_frecuentes} />
                 ) : (
-                  <div className="p-4 bg-gray-800/30 rounded-lg">
+                  <div className="p-4 bg-gray-800/30 rounded-lg text-gray-200">
                     No hay preguntas frecuentes disponibles
                   </div>
                 )}
@@ -173,7 +173,7 @@ const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
           </Tabs>
         </CardContent>
         
-        <CardFooter className="border-t border-gray-700/30 bg-gray-900/40 p-4 text-sm text-gray-400">
+        <CardFooter className="border-t border-gray-700/30 bg-gray-900/40 p-4 text-sm text-gray-300">
           <div className="flex flex-col sm:flex-row sm:justify-between w-full">
             <span>Análisis generado el {new Date().toLocaleDateString()}</span>
             <span className="mt-1 sm:mt-0">Los resultados están basados en datos históricos y no garantizan rendimientos futuros</span>

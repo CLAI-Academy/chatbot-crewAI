@@ -93,7 +93,7 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
     return (
       <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30">
         <CardHeader className="bg-indigo-900/20 border-b border-gray-700/30">
-          <CardTitle className="text-lg">Recomendaciones</CardTitle>
+          <CardTitle className="text-lg text-white">Recomendaciones</CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
           <p className="text-gray-400">No hay recomendaciones disponibles.</p>
@@ -105,7 +105,7 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
   return (
     <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/30 h-full">
       <CardHeader className="bg-indigo-900/20 border-b border-gray-700/30">
-        <CardTitle className="text-lg">Recomendaciones</CardTitle>
+        <CardTitle className="text-lg text-white">Recomendaciones</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         <ul className="space-y-4">

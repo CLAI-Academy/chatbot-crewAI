@@ -52,8 +52,8 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
         <CardHeader className="bg-gradient-to-r from-gray-800/60 to-gray-700/60 border-b border-gray-700/30">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl font-bold">{nombre_escenario}</CardTitle>
-              <p className="text-sm text-gray-400 mt-1">Inversión total: ${inversion_total.toLocaleString()}</p>
+              <CardTitle className="text-xl font-bold text-white">{nombre_escenario}</CardTitle>
+              <p className="text-sm text-gray-300 mt-1">Inversión total: ${inversion_total.toLocaleString()}</p>
             </div>
             <Badge 
               className={`bg-opacity-20 border ${
@@ -70,13 +70,13 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
         </CardHeader>
         
         <CardContent className="p-4">
-          <p className="mb-4 text-sm text-gray-300">{explicacion}</p>
+          <p className="mb-4 text-sm text-gray-200">{explicacion}</p>
           
           {/* Investment charts section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {/* Pie chart for porcentaje */}
             <div className="h-[180px] bg-gray-900/30 rounded-lg p-2">
-              <h4 className="text-xs uppercase text-gray-400 font-semibold text-center mb-1">Distribución</h4>
+              <h4 className="text-xs uppercase text-gray-300 font-semibold text-center mb-1">Distribución</h4>
               <ResponsiveContainer width="100%" height="90%">
                 <PieChart>
                   <Pie
@@ -101,7 +101,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
             
             {/* Bar chart for rentabilidad */}
             <div className="h-[180px] bg-gray-900/30 rounded-lg p-2">
-              <h4 className="text-xs uppercase text-gray-400 font-semibold text-center mb-1">Rentabilidad esperada</h4>
+              <h4 className="text-xs uppercase text-gray-300 font-semibold text-center mb-1">Rentabilidad esperada</h4>
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart data={barChartData}>
                   <XAxis dataKey="name" tick={false} />
@@ -115,28 +115,28 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
           
           {/* Investment details */}
           <div className="mb-5">
-            <h4 className="text-sm font-semibold mb-2">Detalle de inversiones</h4>
+            <h4 className="text-sm font-semibold mb-2 text-white">Detalle de inversiones</h4>
             <div className="space-y-4">
               {inversiones.map((inversion, i) => (
                 <div key={i} className="bg-gray-900/30 p-3 rounded-lg border border-gray-700/30">
                   <div className="flex justify-between mb-1">
-                    <span className="font-medium text-sm">{inversion.nombre}</span>
+                    <span className="font-medium text-sm text-white">{inversion.nombre}</span>
                     <Badge variant="outline">{inversion.tipo_inversion}</Badge>
                   </div>
-                  <p className="text-xs text-gray-400 mb-2">{inversion.descripcion}</p>
+                  <p className="text-xs text-gray-300 mb-2">{inversion.descripcion}</p>
                   
                   <div className="grid grid-cols-3 gap-2 text-center text-xs mb-3">
                     <div className="bg-gray-800/40 p-1 rounded">
-                      <div className="text-gray-400">Porcentaje</div>
-                      <div className="font-bold">{inversion.porcentaje}%</div>
+                      <div className="text-gray-300">Porcentaje</div>
+                      <div className="font-bold text-white">{inversion.porcentaje}%</div>
                     </div>
                     <div className="bg-gray-800/40 p-1 rounded">
-                      <div className="text-gray-400">Rentabilidad</div>
-                      <div className="font-bold">{inversion.rentabilidad_esperada}%</div>
+                      <div className="text-gray-300">Rentabilidad</div>
+                      <div className="font-bold text-white">{inversion.rentabilidad_esperada}%</div>
                     </div>
                     <div className="bg-gray-800/40 p-1 rounded">
-                      <div className="text-gray-400">Ingreso mensual</div>
-                      <div className="font-bold">${inversion.ingreso_mensual}</div>
+                      <div className="text-gray-300">Ingreso mensual</div>
+                      <div className="font-bold text-white">${inversion.ingreso_mensual}</div>
                     </div>
                   </div>
                   
@@ -165,7 +165,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
           
           {/* Steps to follow */}
           <div className="mb-5">
-            <h4 className="text-sm font-semibold mb-2">Pasos a seguir</h4>
+            <h4 className="text-sm font-semibold mb-2 text-white">Pasos a seguir</h4>
             <ol className="list-decimal list-inside space-y-1 text-sm text-gray-300">
               {pasos_a_seguir.map((paso, i) => (
                 <li key={i} className="p-2 rounded bg-gray-900/20 border-l-2 border-blue-500/50">
@@ -178,11 +178,11 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario }) => {
           {/* Objective */}
           <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg">
             <h4 className="text-sm font-semibold text-blue-300 mb-1">Objetivo</h4>
-            <p className="text-sm">{objetivo}</p>
+            <p className="text-sm text-gray-200">{objetivo}</p>
           </div>
         </CardContent>
         
-        <CardFooter className="bg-gray-900/20 border-t border-gray-700/30 p-3 text-xs text-gray-400">
+        <CardFooter className="bg-gray-900/20 border-t border-gray-700/30 p-3 text-xs text-gray-300">
           <div className="flex justify-between w-full">
             <span>Tiempo recomendado: {scenario.tiempo_recomendado}</span>
           </div>

@@ -34,7 +34,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
         {/* Tendencias del Mercado */}
         <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
           <div className="p-4 bg-indigo-900/20 border-b border-gray-700/30">
-            <h3 className="text-lg font-semibold">Tendencias del Mercado</h3>
+            <h3 className="text-lg font-semibold text-white">Tendencias del Mercado</h3>
           </div>
           <div className="p-5">
             <p className="text-gray-300">{data.tendencias}</p>
@@ -44,7 +44,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
         {/* Oportunidades de Inversión */}
         <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
           <div className="p-4 bg-blue-900/20 border-b border-gray-700/30">
-            <h3 className="text-lg font-semibold">Oportunidades de Inversión</h3>
+            <h3 className="text-lg font-semibold text-white">Oportunidades de Inversión</h3>
           </div>
           <div className="p-5">
             <p className="text-gray-300">{data.oportunidades}</p>
@@ -55,7 +55,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
         {challenges && (
           <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 overflow-hidden">
             <div className="p-4 bg-red-900/20 border-b border-gray-700/30">
-              <h3 className="text-lg font-semibold">{challengesField === 'riesgos' ? 'Riesgos' : 'Retos'}</h3>
+              <h3 className="text-lg font-semibold text-white">{challengesField === 'riesgos' ? 'Riesgos' : 'Retos'}</h3>
             </div>
             <div className="p-5">
               <p className="text-gray-300">{challenges}</p>
@@ -68,7 +68,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
       <div className="flex flex-col space-y-6">
         <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 h-full">
           <div className="p-4 bg-violet-900/20 border-b border-gray-700/30">
-            <h3 className="text-lg font-semibold">Sentimiento del Mercado</h3>
+            <h3 className="text-lg font-semibold text-white">Sentimiento del Mercado</h3>
           </div>
           <div className="p-5 flex flex-col items-center">
             <div className="h-[200px] w-full">
@@ -98,7 +98,7 @@ export const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ data }) => {
                     className="w-3 h-3 rounded-full mr-2" 
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   ></div>
-                  <span className="text-sm">{entry.name}</span>
+                  <span className="text-sm text-white">{entry.name}</span>
                 </div>
               ))}
             </div>
