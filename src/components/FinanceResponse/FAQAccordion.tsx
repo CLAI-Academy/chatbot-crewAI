@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FAQ } from './FinanceResponse';
+import { FAQ } from '@/types/finance';
 
 interface FAQAccordionProps {
   faqs: FAQ[];

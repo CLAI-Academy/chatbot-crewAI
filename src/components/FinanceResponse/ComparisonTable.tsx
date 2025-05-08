@@ -1,21 +1,10 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from '@/components/ui/table';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-
-// Importación dinámica de Recharts para evitar problemas de SSR
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-
-interface Comparison {
-  nombre_escenario: string;
-  nivel_riesgo: string;
-  ganancia_total: number;
-  ingreso_mensual: number;
-  recomendado: boolean;
-  razon_recomendacion: string;
-}
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Comparison } from '@/types/finance';
 
 interface ComparisonTableProps {
   comparisons: Comparison[];
@@ -90,7 +79,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                 <YAxis />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value as number)}`, 'Ganancia']}
+                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(value))}`, 'Ganancia']}
                 />
                 <Bar 
                   dataKey="ganancia" 
@@ -118,7 +107,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ comparisons })
                 <YAxis />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '0.375rem' }} 
-                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value as number)}`, 'Ingreso Mensual']}
+                  formatter={(value) => [`${Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(value))}`, 'Ingreso Mensual']}
                 />
                 <Bar 
                   dataKey="ingreso" 

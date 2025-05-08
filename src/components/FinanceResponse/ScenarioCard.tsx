@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, 
   BarChart, Bar, XAxis, YAxis, Tooltip
 } from 'recharts';
-import { Scenario } from './FinanceResponse';
+import { Scenario } from '@/types/finance';
 
 interface ScenarioCardProps {
   scenario: Scenario;

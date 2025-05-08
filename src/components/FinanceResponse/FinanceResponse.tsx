@@ -19,13 +19,15 @@ interface FinanceResponseProps {
 const FinanceResponse: React.FC<FinanceResponseProps> = ({ data }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Añadir logs para depuración
   useEffect(() => {
     console.log('🔍 FinanceResponse - Datos recibidos:', data);
     console.log('📋 Escenarios:', data.escenarios?.length || 0);
     console.log('📊 Análisis de mercado:', data.analisis_mercado ? 'Presente' : 'Ausente');
     console.log('📈 Comparaciones:', data.comparaciones?.length || 0);
     console.log('📝 Recomendaciones:', Object.keys(data.recomendaciones || {}));
+  }, [data]);
+  
+  useEffect(() => {
     console.log('🔍 Rendering comparison tab with data:', data.comparaciones);
     console.log('🔍 Rendering market tab with data:', data.analisis_mercado);
     console.log('🔍 Rendering recommendations tab with data:', data.recomendaciones);

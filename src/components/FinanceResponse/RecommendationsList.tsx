@@ -2,7 +2,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Recommendations } from './FinanceResponse';
+
+// Define the type for recommendations
+type Recommendations = Record<string, string>;
 
 interface RecommendationsListProps {
   recommendations: Recommendations;
@@ -81,7 +83,7 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({ recomm
     
     return {
       title,
-      content: value,
+      content: value as string,
       icon
     };
   });
