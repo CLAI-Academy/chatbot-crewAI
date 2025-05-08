@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessage, { MessageType } from './ChatMessage';
@@ -30,10 +29,10 @@ const ChatInterface: React.FC = () => {
   const [agentFlowInfo, setAgentFlowInfo] = useState<AgentFlowInfo | null>(null);
   const [hasInitiatedChat, setHasInitiatedChat] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const [financeData, setFinanceData] = useState<FinanceData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modeRef = useRef<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null); // Use ref instead of state for WebSocket
   const { user } = useAuth();
 
   // URL for WebSocket
@@ -47,147 +46,169 @@ const ChatInterface: React.FC = () => {
   
   // Función para conectar WebSocket
   const connectWebSocket = () => {
-    console.log('🚀 Iniciando conexión WebSocket directa...');
-    
-    try {
-      const socket = new WebSocket(wsUrl);
+    return new Promise<WebSocket>((resolve, reject) => {
+      // Si ya hay una conexión abierta, la reutilizamos
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        console.log('✅ Reutilizando conexión WebSocket existente');
+        resolve(wsRef.current);
+        return;
+      }
       
-      // Evento: conexión establecida
-      socket.onopen = () => {
-        console.log('✅ WebSocket conexión establecida');
-        setIsConnected(true);
-      };
+      console.log('🚀 Iniciando conexión WebSocket directa...');
       
-      // Evento: mensaje recibido
-      socket.onmessage = (event) => {
-        console.log('📨 Mensaje WebSocket recibido:', event.data);
-        try {
-          const data = JSON.parse(event.data);
-          console.log('🔄 Datos procesados:', data);
-          
-          if (data.connected) {
-            console.log('✅ Conexión confirmada, client_id:', data.client_id);
-            return;
-          }
-          
-          if (data.status === 'pensando') {
-            setIsLoading(true);
-            return;
-          }
-          
-          if (data.mode && data.agents) {
-            // Actualizar información del flujo de agentes
-            setAgentFlowInfo({
-              mode: data.mode,
-              agents: data.agents,
-              currentAgent: data.actual_agent || null
-            });
-          }
-          
-          if (data.actual_agent && agentFlowInfo) {
-            // Actualizar solo el agente actual
-            setAgentFlowInfo(prev => prev ? {
-              ...prev,
-              currentAgent: data.actual_agent
-            } : null);
-          }
-          
-          if (data.status === 'completed' && data.resultado) {
-            // Usar el modo que viene en el propio mensaje, no el estado
-            const messageMode = data.mode || modeRef.current;
+      try {
+        const socket = new WebSocket(wsUrl);
+        
+        // Evento: conexión establecida
+        socket.onopen = () => {
+          console.log('✅ WebSocket conexión establecida');
+          wsRef.current = socket;
+          setIsConnected(true);
+          resolve(socket);
+        };
+        
+        // Evento: mensaje recibido
+        socket.onmessage = (event) => {
+          console.log('📨 Mensaje WebSocket recibido:', event.data);
+          try {
+            const data = JSON.parse(event.data);
+            console.log('🔄 Datos procesados:', data);
             
-            // Check if the result is a JSON structure for finance response
-            if (messageMode === 'finanzas') {
-              try {
-                console.log('⚙️ Procesando datos financieros, modo detectado:', messageMode);
-                
-                // Parse resultado if it's a string, otherwise use as is
-                let financeResult = data.resultado;
-                
-                if (typeof financeResult === 'string') {
-                  console.log('🔄 Parseando JSON desde string...');
-                  // Log the first 200 characters to debug
-                  console.log('📄 Primeros 200 caracteres:', financeResult.substring(0, 200));
+            if (data.connected) {
+              console.log('✅ Conexión confirmada, client_id:', data.client_id);
+              return;
+            }
+            
+            if (data.status === 'pensando') {
+              setIsLoading(true);
+              return;
+            }
+            
+            if (data.mode && data.agents) {
+              // Actualizar información del flujo de agentes
+              setAgentFlowInfo({
+                mode: data.mode,
+                agents: data.agents,
+                currentAgent: data.actual_agent || null
+              });
+            }
+            
+            if (data.actual_agent && agentFlowInfo) {
+              // Actualizar solo el agente actual
+              setAgentFlowInfo(prev => prev ? {
+                ...prev,
+                currentAgent: data.actual_agent
+              } : null);
+            }
+            
+            if (data.status === 'completed' && data.resultado) {
+              // Usar el modo que viene en el propio mensaje, no el estado
+              const messageMode = data.mode || modeRef.current;
+              
+              // Check if the result is a JSON structure for finance response
+              if (messageMode === 'finanzas') {
+                try {
+                  console.log('⚙️ Procesando datos financieros, modo detectado:', messageMode);
                   
-                  try {
-                    financeResult = JSON.parse(financeResult);
-                    console.log('✅ JSON parseado correctamente');
-                  } catch (parseError) {
-                    console.error('❌ Error al parsear JSON:', parseError);
-                    console.log('📝 Contenido del string que falló al parsear:', financeResult.substring(0, 500) + '...');
+                  // Parse resultado if it's a string, otherwise use as is
+                  let financeResult = data.resultado;
+                  
+                  if (typeof financeResult === 'string') {
+                    console.log('🔄 Parseando JSON desde string...');
+                    // Log the first 200 characters to debug
+                    console.log('📄 Primeros 200 caracteres:', financeResult.substring(0, 200));
                     
-                    // Intentar recuperar partes del JSON si es posible
-                    const jsonMatch = /\{[\s\S]*\}/.exec(financeResult);
-                    if (jsonMatch) {
-                      try {
-                        financeResult = JSON.parse(jsonMatch[0]);
-                        console.log('✅ JSON recuperado de fragmento');
-                      } catch (e) {
-                        console.error('❌ Tampoco se pudo recuperar el JSON del fragmento');
+                    try {
+                      financeResult = JSON.parse(financeResult);
+                      console.log('✅ JSON parseado correctamente');
+                    } catch (parseError) {
+                      console.error('❌ Error al parsear JSON:', parseError);
+                      console.log('📝 Contenido del string que falló al parsear:', financeResult.substring(0, 500) + '...');
+                      
+                      // Intentar recuperar partes del JSON si es posible
+                      const jsonMatch = /\{[\s\S]*\}/.exec(financeResult);
+                      if (jsonMatch) {
+                        try {
+                          financeResult = JSON.parse(jsonMatch[0]);
+                          console.log('✅ JSON recuperado de fragmento');
+                        } catch (e) {
+                          console.error('❌ Tampoco se pudo recuperar el JSON del fragmento');
+                          financeResult = null;
+                        }
+                      } else {
                         financeResult = null;
                       }
-                    } else {
-                      financeResult = null;
                     }
+                  } else {
+                    console.log('✅ Datos ya en formato objeto, no necesita parsing');
                   }
-                } else {
-                  console.log('✅ Datos ya en formato objeto, no necesita parsing');
-                }
-                
-                console.log('📊 Objeto de datos financieros:', financeResult);
-                
-                // Crear objeto seguro con validación de cada propiedad
-                if (financeResult) {
-                  const safeFinanceResult: FinanceData = {
-                    escenarios: Array.isArray(financeResult.escenarios) ? financeResult.escenarios : [],
-                    comparaciones: Array.isArray(financeResult.comparaciones) ? financeResult.comparaciones : [],
-                    analisis_mercado: financeResult.analisis_mercado || {},
-                    recomendaciones: typeof financeResult.recomendaciones === 'object' ? financeResult.recomendaciones : {},
-                    preguntas_frecuentes: Array.isArray(financeResult.preguntas_frecuentes) ? financeResult.preguntas_frecuentes : [],
-                    consejos_practicos: Array.isArray(financeResult.consejos_practicos) ? financeResult.consejos_practicos : []
-                  };
                   
-                  console.log('🔒 Datos financieros validados:', safeFinanceResult);
-                  console.log('📋 Escenarios:', safeFinanceResult.escenarios.length);
-                  console.log('📈 Comparaciones:', safeFinanceResult.comparaciones.length);
-                  console.log('📊 Análisis de mercado:', Object.keys(safeFinanceResult.analisis_mercado).length ? 'Presente' : 'Ausente');
-                  console.log('📝 Recomendaciones:', Object.keys(safeFinanceResult.recomendaciones).length);
-                  console.log('❓ FAQs:', safeFinanceResult.preguntas_frecuentes.length);
-                  console.log('💡 Consejos:', safeFinanceResult.consejos_practicos.length);
+                  console.log('📊 Objeto de datos financieros:', financeResult);
                   
-                  // Establecer los datos financieros sin importar si escenarios está vacío o no
-                  setFinanceData(safeFinanceResult);
-                  
-                  // Add a simple text message for the chat history
+                  // Crear objeto seguro con validación de cada propiedad
+                  if (financeResult) {
+                    const safeFinanceResult: FinanceData = {
+                      escenarios: Array.isArray(financeResult.escenarios) ? financeResult.escenarios : [],
+                      comparaciones: Array.isArray(financeResult.comparaciones) ? financeResult.comparaciones : [],
+                      analisis_mercado: financeResult.analisis_mercado || {},
+                      recomendaciones: typeof financeResult.recomendaciones === 'object' ? financeResult.recomendaciones : {},
+                      preguntas_frecuentes: Array.isArray(financeResult.preguntas_frecuentes) ? financeResult.preguntas_frecuentes : [],
+                      consejos_practicos: Array.isArray(financeResult.consejos_practicos) ? financeResult.consejos_practicos : []
+                    };
+                    
+                    console.log('🔒 Datos financieros validados:', safeFinanceResult);
+                    console.log('📋 Escenarios:', safeFinanceResult.escenarios.length);
+                    console.log('📈 Comparaciones:', safeFinanceResult.comparaciones.length);
+                    console.log('📊 Análisis de mercado:', Object.keys(safeFinanceResult.analisis_mercado).length ? 'Presente' : 'Ausente');
+                    console.log('📝 Recomendaciones:', Object.keys(safeFinanceResult.recomendaciones).length);
+                    console.log('❓ FAQs:', safeFinanceResult.preguntas_frecuentes.length);
+                    console.log('💡 Consejos:', safeFinanceResult.consejos_practicos.length);
+                    
+                    // Establecer los datos financieros sin importar si escenarios está vacío o no
+                    setFinanceData(safeFinanceResult);
+                    
+                    // Add a simple text message for the chat history
+                    const aiMessage: MessageType = {
+                      id: Date.now().toString(),
+                      content: "He analizado tu consulta financiera. A continuación te presento diferentes escenarios y recomendaciones:",
+                      sender: 'ai',
+                      timestamp: new Date()
+                    };
+                    
+                    setMessages(prev => [...prev, aiMessage]);
+                    setIsLoading(false);
+                    return;
+                  } else {
+                    console.error('❌ No se pudo procesar el objeto de datos financieros');
+                    
+                    const aiMessage: MessageType = {
+                      id: Date.now().toString(),
+                      content: "He analizado tu consulta financiera, pero tuve problemas procesando los datos. Por favor, intenta formular tu pregunta de otra manera.",
+                      sender: 'ai',
+                      timestamp: new Date()
+                    };
+                    
+                    setMessages(prev => [...prev, aiMessage]);
+                    setIsLoading(false);
+                  }
+                } catch (e) {
+                  console.error('❌ Error general al procesar datos financieros:', e);
+                  // If parsing fails, fallback to showing as regular message
                   const aiMessage: MessageType = {
                     id: Date.now().toString(),
-                    content: "He analizado tu consulta financiera. A continuación te presento diferentes escenarios y recomendaciones:",
+                    content: "Ocurrió un error al procesar los datos financieros. Por favor, intenta de nuevo.",
                     sender: 'ai',
                     timestamp: new Date()
                   };
                   
                   setMessages(prev => [...prev, aiMessage]);
                   setIsLoading(false);
-                  return;
-                } else {
-                  console.error('❌ No se pudo procesar el objeto de datos financieros');
-                  
-                  const aiMessage: MessageType = {
-                    id: Date.now().toString(),
-                    content: "He analizado tu consulta financiera, pero tuve problemas procesando los datos. Por favor, intenta formular tu pregunta de otra manera.",
-                    sender: 'ai',
-                    timestamp: new Date()
-                  };
-                  
-                  setMessages(prev => [...prev, aiMessage]);
-                  setIsLoading(false);
                 }
-              } catch (e) {
-                console.error('❌ Error general al procesar datos financieros:', e);
-                // If parsing fails, fallback to showing as regular message
+              } else {
+                // Regular message handling if not finance data or parsing failed
                 const aiMessage: MessageType = {
                   id: Date.now().toString(),
-                  content: "Ocurrió un error al procesar los datos financieros. Por favor, intenta de nuevo.",
+                  content: data.resultado,
                   sender: 'ai',
                   timestamp: new Date()
                 };
@@ -195,62 +216,53 @@ const ChatInterface: React.FC = () => {
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
               }
-            } else {
-              // Regular message handling if not finance data or parsing failed
-              const aiMessage: MessageType = {
-                id: Date.now().toString(),
-                content: data.resultado,
-                sender: 'ai',
-                timestamp: new Date()
-              };
-              
-              setMessages(prev => [...prev, aiMessage]);
+            }
+            
+            if (data.error) {
+              console.error('❌ Error en respuesta WebSocket:', data.error);
+              toast({
+                title: "Error",
+                description: data.error,
+                variant: "destructive"
+              });
               setIsLoading(false);
             }
+          } catch (e) {
+            console.error('❌ Error procesando mensaje WebSocket:', e);
           }
-          
-          if (data.error) {
-            console.error('❌ Error en respuesta WebSocket:', data.error);
-            toast({
-              title: "Error",
-              description: data.error,
-              variant: "destructive"
-            });
-            setIsLoading(false);
-          }
-        } catch (e) {
-          console.error('❌ Error procesando mensaje WebSocket:', e);
-        }
-      };
-      
-      // Evento: conexión cerrada
-      socket.onclose = (event) => {
-        console.log(`🔴 WebSocket desconectado. Código: ${event.code}, Razón: ${event.reason || 'No especificada'}`);
-        setIsConnected(false);
-        setIsLoading(false);
-      };
-      
-      // Evento: error de conexión
-      socket.onerror = (error) => {
-        console.error('⚠️ Error en WebSocket:', error);
+        };
+        
+        // Evento: conexión cerrada
+        socket.onclose = (event) => {
+          console.log(`🔴 WebSocket desconectado. Código: ${event.code}, Razón: ${event.reason || 'No especificada'}`);
+          setIsConnected(false);
+          wsRef.current = null; // Clear the reference
+          setIsLoading(false);
+        };
+        
+        // Evento: error de conexión
+        socket.onerror = (error) => {
+          console.error('⚠️ Error en WebSocket:', error);
+          toast({
+            title: "Error de conexión",
+            description: "No se pudo conectar al servidor. Intente de nuevo más tarde.",
+            variant: "destructive"
+          });
+          setIsConnected(false);
+          wsRef.current = null; // Clear the reference
+          setIsLoading(false);
+          reject(error);
+        };
+      } catch (err) {
+        console.error('⛔ Error al crear conexión WebSocket:', err);
         toast({
-          title: "Error de conexión",
-          description: "No se pudo conectar al servidor. Intente de nuevo más tarde.",
+          title: "Error",
+          description: "No se pudo establecer la conexión WebSocket",
           variant: "destructive"
         });
-        setIsConnected(false);
-        setIsLoading(false);
-      };
-      
-      setWs(socket);
-    } catch (err) {
-      console.error('⛔ Error al crear conexión WebSocket:', err);
-      toast({
-        title: "Error",
-        description: "No se pudo establecer la conexión WebSocket",
-        variant: "destructive"
-      });
-    }
+        reject(err);
+      }
+    });
   };
   
   // Limpia agentFlowInfo cuando los datos de finanzas se han cargado completamente
@@ -266,20 +278,17 @@ const ChatInterface: React.FC = () => {
   }, [financeData]);
   
   // Función para enviar mensaje por WebSocket
-  const sendWebSocketMessage = (content: string, image: string | null) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      console.error('⚠️ WebSocket no conectado al intentar enviar mensaje');
-      return false;
-    }
-    
+  const sendWebSocketMessage = async (content: string, image: string | null) => {
     try {
+      const socket = await connectWebSocket();
+      
       const messageData = {
         message: content,
         image: image
       };
       
       console.log('📤 Enviando mensaje por WebSocket:', messageData);
-      ws.send(JSON.stringify(messageData));
+      socket.send(JSON.stringify(messageData));
       console.log('✅ Mensaje enviado correctamente');
       return true;
     } catch (err) {
@@ -291,12 +300,13 @@ const ChatInterface: React.FC = () => {
   // Limpiar WebSocket al desmontar componente
   useEffect(() => {
     return () => {
-      if (ws) {
+      if (wsRef.current) {
         console.log('🧹 Cerrando conexión WebSocket al desmontar');
-        ws.close(1000, "Componente desmontado");
+        wsRef.current.close(1000, "Componente desmontado");
+        wsRef.current = null;
       }
     };
-  }, [ws]);
+  }, []);
   
   useEffect(() => {
     scrollToBottom();
@@ -375,15 +385,13 @@ const ChatInterface: React.FC = () => {
     }
   };
   
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     console.log('📤 Iniciando envío de mensaje:', content);
-    console.log('⚡ Estado conexión antes de enviar:', isConnected ? 'Conectado' : 'Desconectado');
     
     // Initialize WebSocket connection if this is the first message
     if (!hasInitiatedChat) {
       console.log('🚀 Primer mensaje, iniciando conexión WebSocket...');
       setHasInitiatedChat(true);
-      connectWebSocket(); // Conectar WebSocket
     }
 
     // Reset finance data when sending a new message
@@ -404,41 +412,26 @@ const ChatInterface: React.FC = () => {
     setInputCentered(false); // Move input to bottom only when a message is sent
     setIsLoading(true);
     
-    // Si el WebSocket no está conectado aún, espera un poco e intenta enviar
-    if (!isConnected) {
-      console.log('⏳ WebSocket no conectado, esperando conexión...');
+    // Enviar el mensaje usando la función asíncrona
+    try {
+      const success = await sendWebSocketMessage(content, uploadedImage);
       
-      // Reintentar conexión si ya se había iniciado chat
-      if (hasInitiatedChat) {
-        console.log('🔄 Reintentando conexión WebSocket...');
-        connectWebSocket();
+      if (!success) {
+        toast({
+          title: "Error",
+          description: "No se pudo enviar el mensaje",
+          variant: "destructive"
+        });
+        setIsLoading(false);
       }
-      
-      // Esperar y luego intentar enviar el mensaje
-      const maxRetries = 10;
-      let retryCount = 0;
-      
-      const retryInterval = setInterval(() => {
-        retryCount++;
-        console.log(`🔄 Intento ${retryCount}/${maxRetries} de enviar mensaje...`);
-        
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          clearInterval(retryInterval);
-          sendWebSocketMessage(content, uploadedImage);
-        } else if (retryCount >= maxRetries) {
-          clearInterval(retryInterval);
-          console.error('❌ No se pudo establecer conexión después de varios intentos');
-          toast({
-            title: "Error de conexión",
-            description: "No se pudo conectar al servidor después de varios intentos",
-            variant: "destructive"
-          });
-          setIsLoading(false);
-        }
-      }, 500);
-    } else {
-      // WebSocket ya conectado, enviar directamente
-      sendWebSocketMessage(content, uploadedImage);
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el mensaje",
+        variant: "destructive"
+      });
+      setIsLoading(false);
     }
     
     // Clear image URL after sending
