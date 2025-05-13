@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# Chatbot con CrewAI
 
-## Project info
+<div align="center">
+  <img src="./public/Logo-completo.png" alt="Logo del Chatbot" width="400"/>
+</div>
 
-**URL**: https://lovable.dev/projects/b51d96c6-03e4-4145-af36-6fbe11fd5c39
+## Descripción
 
-## How can I edit this code?
+Este proyecto implementa una interfaz de usuario para un chatbot que utiliza CrewAI para orquestar diferentes agentes inteligentes. La aplicación permite interactuar con múltiples agentes especializados que trabajan en conjunto para responder consultas y ejecutar tareas complejas.
 
-There are several ways of editing your application.
+## Requisitos Previos
 
-**Use Lovable**
+- Node.js (versión 18 o superior)
+- npm o yarn
+- Backend de agentes corriendo en el puerto 8000
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b51d96c6-03e4-4145-af36-6fbe11fd5c39) and start prompting.
+## Instalación
 
-Changes made via Lovable will be committed automatically to this repo.
+### 1. Clonar el repositorio
 
-**Use your preferred IDE**
+```bash
+git clone https://github.com/tu-usuario/chatbot-crewAI.git
+cd chatbot-crewAI
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 2. Instalar dependencias
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Con npm:
+```bash
+npm install
+```
 
-Follow these steps:
+O con yarn:
+```bash
+yarn install
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Ejecución
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 1. Asegúrate de que el backend de agentes esté activo
 
-# Step 3: Install the necessary dependencies.
-npm i
+Antes de iniciar la interfaz, verifica que el backend de agentes esté corriendo en `http://localhost:8000`. 
+**¡IMPORTANTE!** La aplicación no funcionará correctamente si el backend no está disponible en ese puerto.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 2. Iniciar el servidor de desarrollo
+
+Con npm:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+O con yarn:
+```bash
+yarn dev
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+La aplicación estará disponible en `http://localhost:8080`
 
-**Use GitHub Codespaces**
+## Construir para producción
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Con npm:
+```bash
+npm run build
+```
 
-## What technologies are used for this project?
+O con yarn:
+```bash
+yarn build
+```
 
-This project is built with:
+## Tecnologías Utilizadas
 
+- React
 - Vite
 - TypeScript
-- React
-- shadcn-ui
 - Tailwind CSS
+- shadcn/ui
+- React Router
+- React Query
+- Supabase
 
-## How can I deploy this project?
+## Licencia
 
-Simply open [Lovable](https://lovable.dev/projects/b51d96c6-03e4-4145-af36-6fbe11fd5c39) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+[MIT](LICENSE)
